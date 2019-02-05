@@ -1,0 +1,14 @@
+{
+  "name": "softwareenginneringproject1",
+  "version": "1.0.0",
+  "description": "initial testing destop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "me",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^4.0.4"
+  }
+}
