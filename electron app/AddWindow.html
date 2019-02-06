@@ -15,17 +15,21 @@
 		<button type="submit">Add Slide</button>
 	</form>
 	<script>
+		//the form aread above the script section here is the area that the user inputs information, 
+		//then the next two things below this line are making sure that the script section has what it needs
 		const electron = require('electron');
 		const {ipcRenderer} = electron;
 		
+		//this stuff grabs the information from the for when the user hits submit
 		const form = document.querySelector('form');
-		form.addEventListener('submit',submitForm);
+		form.addEventListener('submit',submitForm);//and this uses that information to call the function below
 
+		//the function for submiting the information to the main.js file
 		function submitForm(e){
-			e.preventDefault();
-			const item = document.querySelector('#item').value;
-			const index = document.querySelector('#index').value;
-			ipcRenderer.send('item:add',item,index);
+			e.preventDefault(); //forms by default want to save to a file, this prevents that
+			const item = document.querySelector('#item').value; //grabs the the slide title and saves it into constant item
+			const index = document.querySelector('#index').value; //grabs the slide index and saves it into constant index
+			ipcRenderer.send('item:add',item,index); //sends the item and index to the main.js file, specifically ipcMain with the tag 'item:add'
 		}
 	</script>
 </body>

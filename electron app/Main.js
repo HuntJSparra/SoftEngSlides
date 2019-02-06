@@ -1,124 +1,124 @@
-const electron = require('electron');
-const electronLocalShortcut = require('electron-localshortcut');
-const url = require('url');
-const path = require('path');
+//these are the items that need to be imported
+const electron = require('electron'); //the electron system
+const electronLocalShortcut = require('electron-localshortcut'); //specifically electron stuff for shortcuts
+const url = require('url'); //an imported thing for urls that make things easier
+const path = require('path'); //same as the url import but with system paths
 
+//this creates items from the electron system
 const {app, BrowserWindow, Menu, ipcMain, globalShortcut} = electron;
 
 //objects start ----------------------------------------------
+//this function just creates a new Slide Deck
 function getDeck(deckName){
 	return new Deck(deckName);
 }
 
+//the Deck object
 function Deck(deckName){
-	this.deckName = deckName;
-	this.slides = [];
-	this.currentSlide = 0;
-	this.getSize = function(){
+	this.deckName = deckName; //the deckName
+	this.slides = []; //the slides in the slide deck
+	this.currentSlide = 0; //the current slide that is being shown or edited
+	this.getSize = function(){ //a getter function that grabs the total number of slides in the deck
 		return this.slides.length;
 	};
-	this.getSlide = function(index){
+	this.getSlide = function(index){ //a getter function that grabs a specific slide based on the index given
 		return this.slides[index];
 	};
-	this.display = function(){
-		this.slides[this.currentSlide].display();
-	};
-	this.addSlide = function(slide,index){
-		this.slides.splice(index,0,slide);
-		this.changeCurrentSlide(index);
-		for(currentIndex = 0; currentIndex < this.slides.length; currentIndex++){
-			this.slides[currentIndex].setIndex(currentIndex);
+	this.addSlide = function(slide,index){ //adds a slide to the slide deck at the specified index
+		this.slides.splice(index,0,slide); //the actual insertion of the slide
+		this.changeCurrentSlide(index); 
+		for(currentIndex = 0; currentIndex < this.slides.length; currentIndex++){ //this for loop updates all the slide indexs so that
+			this.slides[currentIndex].setIndex(currentIndex);					  //all the slides have their correct index
 		}
 	};
-	this.removeSlide = function(index){
-		tempone = this.slides.slice(0,index);
-		temptwo = this.slides.slice(index);
-		temptwo.shift();
-		this.slides = tempone.concat(temptwo);
-		for(currentIndex = 0; currentIndex < this.slides.length; currentIndex++){
+	this.removeSlide = function(index){ //removes a slide at the specified index
+		tempone = this.slides.slice(0,index); //this breaks off the front end of the list before the to be removed slide
+		temptwo = this.slides.slice(index);	  //this breaks off the list starting at the to be removed slide and everything after
+		temptwo.shift();					  //this removed the slide no longer wanted and makes the second list smaller by one
+		this.slides = tempone.concat(temptwo);//this combines the two lists broken off from this.slides and sets this.slides equal to it again
+				//everything above had to be done so that there wasn't empty slot inside of the this.slides list which is what delete would do
+		for(currentIndex = 0; currentIndex < this.slides.length; currentIndex++){ //this does the same thing as the for loop in addSlide
 			this.slides[currentIndex].setIndex(currentIndex);
 		}
-		console.log(this.slides);
-		console.log(this.currentSlide);
-		console.log(this.slides.length);
-		if(this.currentSlide >= this.slides.length){
+		if(this.currentSlide >= this.slides.length){ //this makes sure that the current slide is not pointing to outside the slides
 			this.currentSlide = this.slides.length-1;
 		}
-		if(this.currentSlide < 0){
+		if(this.currentSlide < 0){	//same with this one just in the other direction
 			this.currentSlide = 0;
 		}
-		console.log(this.currentSlide);
 	};
-	this.getSlideIndex = function(){
+	this.getSlideIndex = function(){ //this function just returns the index of the slide currently being viewed/ edited
 		return this.currentSlide;
 	};
-	this.changeCurrentSlide = function(newIndex){
+	this.changeCurrentSlide = function(newIndex){ //changes the current slide being viewed/edited
 		this.currentSlide = newIndex;
-		if(this.currentSlide > this.slides.length-1){
+		if(this.currentSlide > this.slides.length-1){//just like in the removeSlide function, with the same purpose
 			this.currentSlide = this.slides.length-1	;
 		}
-		if(this.currentSlide < 0){
+		if(this.currentSlide < 0){ //same here
 			this.currentSlide = 0;
 		}
 	};
-	this.display = function(){
+	this.display = function(){  //the display function, shows only the current slide
 		return this.slides[this.currentSlide].display();
 	};
 }
 
+//the Slide object
 function Slide(slideName,index){
-	this.Slidetitle = slideName;
-	this.Slideindex = new Number(index);
-	this.textBox = new TextBox();
-	this.getIndex = function(){
+	this.Slidetitle = slideName; //the title of this slide, can be just "" (empty title)
+	this.Slideindex = new Number(index); //the index that this slide is, the new Number thing is just to make sure it is a number
+	this.textBox = new TextBox(); // the text box in this slide, maybe in the future this will be a list of things inside the slide
+	this.getIndex = function(){ //just a function to return the slide's index
 		return this.Slideindex;
 	};
-	this.setTitle = function(newSlideName){
+	this.setTitle = function(newSlideName){ //a function to change the title of the slide
 		this.Slidetitle = newSlideName;
 	};
-	this.addToTextBox = function(text,index){
-		this.textBox.add(text,index);
+	this.addToTextBox = function(text,index){ //a function to adds text to the text box, currently no interace to use this
+		this.textBox.add(text,index);		  //just here for the future to make things easier
 	};
-	this.removeFromTextBox = function(index){
-		this.textBox.remove(index);
+	this.removeFromTextBox = function(index){ //a function to remove text from the text box, this is basically the same as pressing backspace
+		this.textBox.remove(index);			  //or pressing delete, functionality will be added later
 	};
-	this.setIndex = function(newIndex){
+	this.setIndex = function(newIndex){ //a function for setting the index of slide, mostly for the remove and add slide functions
 		this.Slideindex = new Number(newIndex);
-	}
-	this.display = function(){
+	};
+	this.display = function(){ //the display function for the slide, for right now just returns the slide title and slide index
 		const list = [];
 		list.push(this.Slidetitle);
 		list.push(this.Slideindex);
 		return list.join(", ");
-		//display function
-		//be sure to also display the text box
+		//be sure to also display the text box (later)
 	};
 }
 
+//the Text Box object (this is not entirly done yet, some for functionally has to be added)
 function TextBox(initalX,initalY,initialWidth,initialHeight){
-	this.Text = [];
-	this.CursorIndex = 0;
-	this.centerX = initalX;
-	this.centerY = initalY;
-	this.boxWidth = initialWidth;
-	this.boxHeight = initialHeight;
-	this.add = function(text,index){
+	this.Text = []; //this list will contain all the text in the textbox, character by character
+	this.CursorIndex = -1; //where the cursor is on the textbox if it is on the textbox, otherwise it is -1
+	this.centerX = initalX; //the x value of where the textbox is when it is initially added
+	this.centerY = initalY; //the y value of where the textbox is when it is initially added
+	this.boxWidth = initialWidth; //the width value of the textbox when it is initially added
+	this.boxHeight = initialHeight; //the height value of the textbox when it is initally added
+	this.add = function(text,index){ //function for adding text to the textbox
 		this.Text.splice(index,0,text);
 		//adding a single character at the desired index
 	};
-	this.remove = function(index){
+	this.remove = function(index){ //function for removing text from the textbox
 		tempone = this.text.slice(0,index);
 		temptwo = this.text.slice(index);
 		temptwo.shift();
 		this.Text = tempone.concat(temptwo);
 		//removing a single character at the desired index
 	};
-	this.moveCursor = function(index){
+	this.moveCursor = function(index){ //function for moving the cursor within the textbox
 		this.CursorIndex = index;
 	}
 }
 //objects stop -----------------------------------------------
 
+//these lets are all the global variables, allows everything after to see this variables
 let mainWindow; 
 let addWindow;
 let removeWindow;
@@ -128,45 +128,54 @@ let currentDeck;
 // listen for the app to be ready
 app.on('ready',function(){
 	const {ScreenWidth,ScreenHeigh} = electron.screen.getPrimaryDisplay().workAreaSize;
+	//create the initial deck
 	currentDeck = new Deck("initial_deck");
 	//create new window
 	mainWindow = new BrowserWindow({
 		width: 1980,
 		height:1120
 	});
+	//maximize the main window
 	mainWindow.maximize();
+	//this causes it not to show until the previous is done, so, once the window is maximized then it will actually show
 	mainWindow.once('ready-to-show',function(){
 		mainWindow.show();
-	})
-	const exitFullScreen = globalShortcut.register('Esc',function(){
+	});
+
+
+	//these next constants are just shortcuts that are 'global' but are mostly used for a single window
+	const exitFullScreen = globalShortcut.register('Esc',function(){ //this shortcut is for leaving presentation mode
 		if(BrowserWindow.getFocusedWindow() == presentWindow){
 			Menu.setApplicationMenu(mainMenu);
 			presentWindow.close();
 		}
 	});
-	const nextSlide = globalShortcut.register('CmdOrCtrl+Right',function(){
+	const nextSlide = globalShortcut.register('CmdOrCtrl+Right',function(){//this shortcut is to advance the current slide by one
 		if(BrowserWindow.getFocusedWindow() == mainWindow){
 			currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()+1);
 			update();
 			console.log("shifted Slide to next");
 		}
 	});
-	const previousSlide = globalShortcut.register('CmdOrCtrl+Left',function(){
+	const previousSlide = globalShortcut.register('CmdOrCtrl+Left',function(){//this shortcut is to bring the current slide back by one
 		if(BrowserWindow.getFocusedWindow() == mainWindow){
 			currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()-1);
 			update();
 			console.log("shifted Slide to previous");
 		}
 	});
-	const exitApp = globalShortcut.register('CmdOrCtrl+Q',function(){
+	const exitApp = globalShortcut.register('CmdOrCtrl+Q',function(){//this shortcut is to simply quit
 		mainWindow.close();
-	})
+	});
+
+
 	//load html file into window
 	mainWindow.loadURL(url.format({
 		pathname: path.join(__dirname,'mainWindow.html'),
 		protocol: 'file:',
 		slashes: true
 	}));
+
 	//quit app when closed
 	mainWindow.on('closed',function(){
 		app.quit();
@@ -174,7 +183,7 @@ app.on('ready',function(){
 
 	//build menu from template
 	const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
-	//const PresentationMenu = Menu.buildFromTemplate(PresentationMenuTemplate);
+
 	//insert the menu
 	Menu.setApplicationMenu(mainMenu);
 });
@@ -218,23 +227,26 @@ function createRemoveWindow(){
 	})
 }
 
-//catch item add
+//catch item add, this comes from the addWindow.html file, specifically the ipcrenderer.send function
 ipcMain.on('item:add',function(e,item,index){
-	currentDeck.addSlide(new Slide(item,index),currentDeck.getSize());
-	mainWindow.webContents.send('item:add',currentDeck.display());
-	addWindow.close();
+	currentDeck.addSlide(new Slide(item,index),currentDeck.getSize()); //calls on the deck function for adding a new slide
+	mainWindow.webContents.send('item:add',currentDeck.display()); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
+	addWindow.close(); //closes the addWindow
 });
 
+//catch item remove, this comes from the removeWindow.html file, specifically the ipcRenderer.send function
 ipcMain.on('item:remove',function(e,index){
-	currentDeck.removeSlide(index);
-	mainWindow.webContents.send('item:remove',currentDeck.display());
-	removeWindow.close();
+	currentDeck.removeSlide(index); //calls on the deck function for removing a slide
+	mainWindow.webContents.send('item:remove',currentDeck.display()); //send information to ipcRenderer with the 'item:remove' tag in mainWindow.html
+	removeWindow.close(); //closes the removeWindow
 });
 
+//a catch function for simply updating the mainWindow whenever a change happens and isn't caught by anything else
 function update(){
-	mainWindow.webContents.send('update',currentDeck.display());
+	mainWindow.webContents.send('update',currentDeck.display()); //send information to ipcRenderer with the 'update' tag in mainWindow.html
 }
 
+//this function start presentaion mode
 function PresentFullScreen(){
 	//create new window
 	presentWindow = new BrowserWindow({
@@ -242,21 +254,29 @@ function PresentFullScreen(){
 		height:300,
 		title:'Presenting'
 	});
+
+	//sets presentWindow to fullscreen
 	presentWindow.setFullScreen(true);
+
+	//temperarily hides the menu during presenting mode, will be put back once its closed
 	Menu.setApplicationMenu(null);
+
 	//load html file into window
 	presentWindow.loadURL(url.format({
 		pathname: path.join(__dirname,'presentWindow.html'),
 		protocol: 'file:',
 		slashes: true
 	}));
+
 	//garbage collection handle
 	presentWindow.on('close',function(){
 		presentWindow = null;
 	});
-	//stuff here for presenting fullscreen
+
+	//stuff here for presenting fullscreen to be added later
 }
 
+//this is a function I added during class that will help in the future for when the presenter clicks on links during the presentation
 function createWebsiteWindow(){
 	//create new window
 	websiteWindow = new BrowserWindow({
@@ -264,12 +284,23 @@ function createWebsiteWindow(){
 		height:300,
 		title:'You clicked a Link!'
 	});
+
+	//makes the website window maximized
 	websiteWindow.maximize();
+
+	//temperarily hides the menu during viewing the website, will be put back once presentation mode is closed
 	Menu.setApplicationMenu(null);
-	//load link into window
+
+	//load link into window to be added later
+
+	//garbage collection handle
+	websiteWindow.on('close',function(){
+		websiteWindow = null;
+	});
 }
 
 //these two functions are very similar windows to the add and remove windows(mostly likely just copy and change some stuff)
+//these two function have not been fulled added yet, but will have their own windows attached
 function Save(){
 	console.log("save the slide deck");
 	//add thing here for a new window that asks the for the deck title to save it and all that shit
@@ -281,6 +312,8 @@ function newSlideDeck(){
 }
 
 //create menu template
+//these are all the menu items shown at the top, the accelerator attached to each is the keyboard shortcut for that item, and the click function
+//is what happens when that item is click/when the hotkeys are pressed
 const mainMenuTemplate = [
 	{
 		label:'File',

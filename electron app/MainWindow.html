@@ -8,21 +8,30 @@
 	<ul></ul>
 </body>
 <script>
+	//the stuff below is to make sure this javascript has the information is needs
 	const electron = require('electron');
 	const {ipcRenderer} = electron;
+
+	//grabs the section in the body above with the <ul> tag
 	const ul = document.querySelector('ul');
 
+	//this grabs information from the main.js file specifically from the webContests.send with the tag 'item:add'
 	ipcRenderer.on('item:add',function(e,item){
+		//the stuff inside here changes the ul tag to the item passed to here
 		const itemText = item;
 		ul.innerHTML = itemText;
 	});
 
+	//this grabs information from the main.js file specifically from the webContests.send with the tag 'item:remove'
 	ipcRenderer.on('item:remove',function(e,item){
+		//the stuff inside here changes the ul tag to the item passed to here
 		const itemText = item;
 		ul.innerHTML = itemText;
 	});
 
+	//this grabs information from the main.js file specifically from the webContests.send with the tag 'update'
 	ipcRenderer.on('update',function(e,item){
+		//the stuff inside here changes the ul tag to the item passed to here
 		const itemText = item;
 		ul.innerHTML = itemText;
 	});
