@@ -3,13 +3,14 @@ const electron = require('electron'); //the electron system
 const electronLocalShortcut = require('electron-localshortcut'); //specifically electron stuff for shortcuts
 const url = require('url'); //an imported thing for urls that make things easier
 const path = require('path'); //same as the url import but with system paths
+const fs = require('fs'); // import for writting things to files
 
 //this creates items from the electron system
 const {app, BrowserWindow, Menu, ipcMain, globalShortcut} = electron;
 
 //objects start ----------------------------------------------
 //this function just creates a new Slide Deck
-function getDeck(deckName){
+function getNewDeck(deckName){
 	return new Deck(deckName);
 }
 
@@ -60,7 +61,12 @@ function Deck(deckName){
 		}
 	};
 	this.display = function(){  //the display function, shows only the current slide
-		return this.slides[this.currentSlide].display();
+		if(this.slides.length == 0){
+			return "";
+		}
+		else{
+			return this.slides[this.currentSlide].display();
+		}
 	};
 }
 
@@ -196,12 +202,14 @@ function createAddWindow(){
 		height:300,
 		title:'Add Slide'
 	});
+
 	//load html file into window
 	addWindow.loadURL(url.format({
 		pathname: path.join(__dirname,'addWindow.html'),
 		protocol: 'file:',
 		slashes: true
 	}));
+
 	//garbage collection handle
 	addWindow.on('close',function(){
 		addWindow = null;
@@ -215,16 +223,18 @@ function createRemoveWindow(){
 		height:300,
 		title:'Remove Slide'
 	});
+
 	//load html file into window
 	removeWindow.loadURL(url.format({
 		pathname: path.join(__dirname,'RemoveWindow.html'),
 		protocol: 'file:',
 		slashes: true
 	}));
+
 	//garbage collection
 	removeWindow.on('close',function(){
 		removeWindow = null;
-	})
+	});
 }
 
 //catch item add, this comes from the addWindow.html file, specifically the ipcrenderer.send function
@@ -241,9 +251,26 @@ ipcMain.on('item:remove',function(e,index){
 	removeWindow.close(); //closes the removeWindow
 });
 
+ipcMain.on('newSlideDeck',function(e,item){
+	currentDeck = getNewDeck(item); //creates a new slide deck and makes it the current one
+	mainWindow.webContents.send('update',currentDeck.display()); //sends information to ipcRenderer with the 'update' tag in mainWindow.html
+	newSlideDeckWindow.close(); //closes the new slide deck window
+});
+
+ipcMain.on('saving',function(e,item){
+	createAndSaveFile(currentDeck); //calls function to create a save file and save it to the system
+	//there is no update here because nothing has really changed
+	savingWindow.close(); //closes the saving window
+});
+
 //a catch function for simply updating the mainWindow whenever a change happens and isn't caught by anything else
 function update(){
 	mainWindow.webContents.send('update',currentDeck.display()); //send information to ipcRenderer with the 'update' tag in mainWindow.html
+}
+
+//function to create a save the save file for the user
+function createAndSaveFile(SlideDeck){
+	//not filled yet
 }
 
 //this function start presentaion mode
@@ -302,13 +329,45 @@ function createWebsiteWindow(){
 //these two functions are very similar windows to the add and remove windows(mostly likely just copy and change some stuff)
 //these two function have not been fulled added yet, but will have their own windows attached
 function Save(){
-	console.log("save the slide deck");
-	//add thing here for a new window that asks the for the deck title to save it and all that shit
+	//create new window
+	savingWindow = new BrowserWindow({
+		width: 300,
+		height:300,
+		title:'Saving'
+	});
+
+	//load html file into window
+	savingWindow.loadURL(url.format({
+		pathname: path.join(__dirname,'savingWindow.html'),
+		protocol: 'file:',
+		slashes: true
+	}));
+
+	//garbage collection handle
+	savingWindow.on('close',function(){
+		savingWindow = null;
+	});
 }
 
 function newSlideDeck(){
-	console.log("add new Slide Deck");
-	//add thing here for a new window that asks for the new deck title and all that shit
+	//create new window
+	newSlideDeckWindow = new BrowserWindow({
+		width: 300,
+		height:300,
+		title:'Create a new slide deck'
+	});
+
+	//load html file into window
+	newSlideDeckWindow.loadURL(url.format({
+		pathname: path.join(__dirname,'newSlideDeckWindow.html'),
+		protocol: 'file:',
+		slashes: true
+	}));
+
+	//garbage collection handle
+	newSlideDeckWindow.on('close',function(){
+		newSlideDeckWindow = null;
+	});
 }
 
 //create menu template
