@@ -26,20 +26,36 @@ function Deck(deckName){
 	this.addSlide = function(slide,index){
 		this.slides.splice(index,0,slide);
 		this.changeCurrentSlide(index);
+		for(currentIndex = 0; currentIndex < this.slides.length; currentIndex++){
+			this.slides[currentIndex].setIndex(currentIndex);
+		}
 	};
 	this.removeSlide = function(index){
 		tempone = this.slides.slice(0,index);
 		temptwo = this.slides.slice(index);
 		temptwo.shift();
 		this.slides = tempone.concat(temptwo);
+		for(currentIndex = 0; currentIndex < this.slides.length; currentIndex++){
+			this.slides[currentIndex].setIndex(currentIndex);
+		}
+		console.log(this.slides);
+		console.log(this.currentSlide);
+		console.log(this.slides.length);
+		if(this.currentSlide >= this.slides.length){
+			this.currentSlide = this.slides.length-1;
+		}
+		if(this.currentSlide < 0){
+			this.currentSlide = 0;
+		}
+		console.log(this.currentSlide);
 	};
 	this.getSlideIndex = function(){
 		return this.currentSlide;
 	};
 	this.changeCurrentSlide = function(newIndex){
 		this.currentSlide = newIndex;
-		if(this.currentSlide > this.slides.length){
-			this.currentSlide = this.slides.length;
+		if(this.currentSlide > this.slides.length-1){
+			this.currentSlide = this.slides.length-1	;
 		}
 		if(this.currentSlide < 0){
 			this.currentSlide = 0;
@@ -59,13 +75,16 @@ function Slide(slideName,index){
 	};
 	this.setTitle = function(newSlideName){
 		this.Slidetitle = newSlideName;
-	}
+	};
 	this.addToTextBox = function(text,index){
 		this.textBox.add(text,index);
 	};
 	this.removeFromTextBox = function(index){
 		this.textBox.remove(index);
 	};
+	this.setIndex = function(newIndex){
+		this.Slideindex = new Number(newIndex);
+	}
 	this.display = function(){
 		const list = [];
 		list.push(this.Slidetitle);
@@ -107,8 +126,7 @@ let presentWindow;
 let currentDeck;
 
 // listen for the app to be ready
-app.on('ready',function(){ 					//(1)open up a new deck
-						   					//(1)mainWindow display the deck
+app.on('ready',function(){
 	const {ScreenWidth,ScreenHeigh} = electron.screen.getPrimaryDisplay().workAreaSize;
 	currentDeck = new Deck("initial_deck");
 	//create new window
@@ -129,11 +147,15 @@ app.on('ready',function(){ 					//(1)open up a new deck
 	const nextSlide = globalShortcut.register('CmdOrCtrl+Right',function(){
 		if(BrowserWindow.getFocusedWindow() == mainWindow){
 			currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()+1);
+			update();
+			console.log("shifted Slide to next");
 		}
 	});
 	const previousSlide = globalShortcut.register('CmdOrCtrl+Left',function(){
 		if(BrowserWindow.getFocusedWindow() == mainWindow){
 			currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()-1);
+			update();
+			console.log("shifted Slide to previous");
 		}
 	});
 	const exitApp = globalShortcut.register('CmdOrCtrl+Q',function(){
@@ -205,9 +227,13 @@ ipcMain.on('item:add',function(e,item,index){
 
 ipcMain.on('item:remove',function(e,index){
 	currentDeck.removeSlide(index);
-	mainWindow.webContents.send('item:remove',currentDeck.getSize());
+	mainWindow.webContents.send('item:remove',currentDeck.display());
 	removeWindow.close();
 });
+
+function update(){
+	mainWindow.webContents.send('update',currentDeck.display());
+}
 
 function PresentFullScreen(){
 	//create new window
@@ -229,6 +255,18 @@ function PresentFullScreen(){
 		presentWindow = null;
 	});
 	//stuff here for presenting fullscreen
+}
+
+function createWebsiteWindow(){
+	//create new window
+	websiteWindow = new BrowserWindow({
+		width: 300,
+		height:300,
+		title:'You clicked a Link!'
+	});
+	websiteWindow.maximize();
+	Menu.setApplicationMenu(null);
+	//load link into window
 }
 
 //these two functions are very similar windows to the add and remove windows(mostly likely just copy and change some stuff)

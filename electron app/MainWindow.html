@@ -8,21 +8,23 @@
 	<ul></ul>
 </body>
 <script>
-									//(1)add deck display
 	const electron = require('electron');
 	const {ipcRenderer} = electron;
 	const ul = document.querySelector('ul');
 
 	ipcRenderer.on('item:add',function(e,item){
-		const itemText = document.createTextNode(item);
+		const itemText = item;
 		ul.innerHTML = itemText;
 	});
 
-	ipcRenderer.on('item:remove',function(e,number){
-		const li = document.createElement('li');
-		const itemText = document.createTextNode("remove "+number);
-		li.appendChild(itemText);
-		ul.appendChild(li);
+	ipcRenderer.on('item:remove',function(e,item){
+		const itemText = item;
+		ul.innerHTML = itemText;
+	});
+
+	ipcRenderer.on('update',function(e,item){
+		const itemText = item;
+		ul.innerHTML = itemText;
 	});
 </script>
 </html>
