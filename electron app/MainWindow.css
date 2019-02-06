@@ -1,0 +1,28 @@
+body {
+	background-color: #EAE5DD;
+}
+
+.slide {
+	background-color: white;
+	margin-left: 10%;
+	margin-right: 10%;
+	padding-left: 10%;
+	padding-right: 10%;
+	height:75vh;
+	text-align: center;
+}
+
+.slide-title {
+	font-size: 250%;
+	position: relative;
+	top: 25%;
+	transform: translateY(-50%);
+}
+
+.slide-text {
+	margin: 0;
+	font-size: 100%;
+	position: relative;
+	top: 45%;
+	transform: translateY(-50%);
+}

@@ -4,36 +4,45 @@
 	<title>Name of Product Here</title>
 </head>
 <body>
+	<link rel="stylesheet" type="text/css" href="MainWindow.css" media="screen">
 	<h1>Current Slide Deck</h1>
 	<ul></ul>
 </body>
-<script>
-	//the stuff below is to make sure this javascript has the information is needs
-	const electron = require('electron');
-	const {ipcRenderer} = electron;
+	<script>
+		//(1)add deck display
+		const electron = require('electron');
+		const {ipcRenderer} = electron;
+		const ul = document.querySelector('ul');
 
-	//grabs the section in the body above with the <ul> tag
-	const ul = document.querySelector('ul');
+		ipcRenderer.on('item:add',function(e,item){
+			const itemText = document.createTextNode(item);
+			ul.innerHTML = itemText;
+		});
 
-	//this grabs information from the main.js file specifically from the webContests.send with the tag 'item:add'
-	ipcRenderer.on('item:add',function(e,item){
-		//the stuff inside here changes the ul tag to the item passed to here
-		const itemText = item;
-		ul.innerHTML = itemText;
-	});
+		ipcRenderer.on('item:remove',function(e,number){
+			const li = document.createElement('li');
+			const itemText = document.createTextNode("remove "+number);
+			li.appendChild(itemText);
+			ul.appendChild(li);
+		});
+	</script>
+	<!--
+		The way this should work at the end (theoretically) is
+		that every time the user adds a slide, it makes a new
+		div. There is a tutorial online for making slideshows
+		that could have some useful information about navigation, but I don't know how it applies to our
+		current/planned architecture.
+		https://www.w3schools.com/howto/howto_js_slideshow.asp
+	-->
+	<div class="slide">
+		<h1 class="slide-title">This is a slide</h2>
+		<p class="slide-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis orci vel ipsum sagittis, et laoreet dui pretium. Donec eget velit sapien. Aenean condimentum, urna ac mollis elementum, tellus justo ultrices tortor, id placerat urna nunc quis urna. Nulla enim diam, condimentum et sapien quis, blandit ornare erat. Maecenas a tortor auctor lorem ullamcorper facilisis eu eget lorem. Curabitur est sem, varius eu arcu sit amet, viverra mollis turpis. Fusce in purus quam. Ut pulvinar turpis et malesuada condimentum. Nulla nisi libero, lacinia quis dui a, dictum euismod libero. Duis metus neque, posuere non nibh a, facilisis facilisis risus. Nam dui augue, pharetra a dolor placerat, euismod aliquam augue.</p>
+	</div>
 
-	//this grabs information from the main.js file specifically from the webContests.send with the tag 'item:remove'
-	ipcRenderer.on('item:remove',function(e,item){
-		//the stuff inside here changes the ul tag to the item passed to here
-		const itemText = item;
-		ul.innerHTML = itemText;
-	});
+	<div class="slide">
+		<h1 class="slide-title">This is another slide</h1>
+		<p class="slide-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce efficitur scelerisque augue, sit amet venenatis massa posuere in. Pellentesque suscipit, turpis sed sollicitudin ullamcorper, nisl lorem consectetur libero, a feugiat neque arcu a nisl. Integer porta lectus non ipsum condimentum, eu feugiat ex rhoncus. Nullam in nisl quis mi scelerisque posuere quis vitae nulla. Nunc tincidunt est bibendum enim pharetra volutpat. Fusce congue eu tortor vitae pretium. Mauris vehicula ipsum sit amet mauris porttitor, sed sodales ipsum semper. Pellentesque finibus elit id nibh dapibus volutpat. Phasellus tincidunt rhoncus tellus nec rutrum. Sed sem urna, laoreet id molestie sit amet, accumsan at urna. Suspendisse potenti. Nullam ut venenatis justo. Mauris interdum tellus id augue congue, vel malesuada felis hendrerit.</p>
 
-	//this grabs information from the main.js file specifically from the webContests.send with the tag 'update'
-	ipcRenderer.on('update',function(e,item){
-		//the stuff inside here changes the ul tag to the item passed to here
-		const itemText = item;
-		ul.innerHTML = itemText;
-	});
-</script>
+		<p class="slide-text">Vivamus non faucibus tortor. Aenean congue accumsan neque, vel varius arcu lobortis sit amet. Donec ullamcorper iaculis sem a efficitur. Phasellus rutrum et justo at sollicitudin. Sed euismod placerat ipsum ac ultrices. Vivamus sagittis fringilla blandit. Curabitur suscipit dolor dolor, ut efficitur velit posuere sit amet. Suspendisse potenti.</p>
+	</div>
 </html>

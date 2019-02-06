@@ -1,15 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<link rel="stylesheet" type="text/css" href="PresentWindow.css" media="screen">
 	<title> Presentation Mode Activated </title>
 </head>
 <body>
 	<ul></ul>
 	<script src="main.js">
-		//this is pretty empty right now, more stuff will eb added
 		const electron = require('electron');
 		const {ipcRenderer} = electron;
 		const ul = document.querySelector('ul');
-
 	</script>
+	<!--
+		The way this should work at the end (theoretically) is
+		that every time the user adds a slide, it makes a new
+		div. There is a tutorial online for making slideshows
+		that could have some useful information about navigation, but I don't know how it applies to our
+		current/planned architecture.
+		https://www.w3schools.com/howto/howto_js_slideshow.asp
+	-->
+	<div>
+		<h1 class="slide-title">This is a slide</h2>
+		<p class="slide-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis orci vel ipsum sagittis, et laoreet dui pretium. Donec eget velit sapien. Aenean condimentum, urna ac mollis elementum, tellus justo ultrices tortor, id placerat urna nunc quis urna. Nulla enim diam, condimentum et sapien quis, blandit ornare erat. Maecenas a tortor auctor lorem ullamcorper facilisis eu eget lorem. Curabitur est sem, varius eu arcu sit amet, viverra mollis turpis. Fusce in purus quam. Ut pulvinar turpis et malesuada condimentum. Nulla nisi libero, lacinia quis dui a, dictum euismod libero. Duis metus neque, posuere non nibh a, facilisis facilisis risus. Nam dui augue, pharetra a dolor placerat, euismod aliquam augue.</p></div>
 </body>
