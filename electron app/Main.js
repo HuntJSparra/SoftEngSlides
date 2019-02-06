@@ -1,50 +1,65 @@
 const electron = require('electron');
+const electronLocalShortcut = require('electron-localshortcut');
 const url = require('url');
 const path = require('path');
 
-const {app, BrowserWindow, Menu, ipcMain} = electron;
+const {app, BrowserWindow, Menu, ipcMain, globalShortcut} = electron;
 
 //objects start ----------------------------------------------
 function getDeck(deckName){
 	return new Deck(deckName);
 }
 
-const zero = new Number(0);
-
 function Deck(deckName){
 	this.deckName = deckName;
-	this.currentSlide = 0;
 	this.slides = [];
-	this.size = zero.valueOf();
+	this.currentSlide = 0;
+	this.getSize = function(){
+		return this.slides.length;
+	};
+	this.getSlide = function(index){
+		return this.slides[index];
+	};
 	this.display = function(){
 		this.slides[this.currentSlide].display();
 	};
 	this.addSlide = function(slide,index){
 		this.slides.splice(index,0,slide);
 		this.changeCurrentSlide(index);
-		this.size++;
 	};
 	this.removeSlide = function(index){
 		tempone = this.slides.slice(0,index);
 		temptwo = this.slides.slice(index);
 		temptwo.shift();
 		this.slides = tempone.concat(temptwo);
-		this.size--;
-		if(this.size < 0){
-			this.size = 0;
-		}
+	};
+	this.getSlideIndex = function(){
+		return this.currentSlide;
 	};
 	this.changeCurrentSlide = function(newIndex){
 		this.currentSlide = newIndex;
+		if(this.currentSlide > this.slides.length){
+			this.currentSlide = this.slides.length;
+		}
+		if(this.currentSlide < 0){
+			this.currentSlide = 0;
+		}
+	};
+	this.display = function(){
+		return this.slides[this.currentSlide].display();
 	};
 }
 
-function Slide(slideName){
-	this.title = slideName;
+function Slide(slideName,index){
+	this.Slidetitle = slideName;
+	this.Slideindex = new Number(index);
 	this.textBox = new TextBox();
-	this.setTitle = function(newTitle){
-		this.title - newTitle;
+	this.getIndex = function(){
+		return this.Slideindex;
 	};
+	this.setTitle = function(newSlideName){
+		this.Slidetitle = newSlideName;
+	}
 	this.addToTextBox = function(text,index){
 		this.textBox.add(text,index);
 	};
@@ -52,14 +67,22 @@ function Slide(slideName){
 		this.textBox.remove(index);
 	};
 	this.display = function(){
+		const list = [];
+		list.push(this.Slidetitle);
+		list.push(this.Slideindex);
+		return list.join(", ");
 		//display function
 		//be sure to also display the text box
 	};
 }
 
-function TextBox(){
+function TextBox(initalX,initalY,initialWidth,initialHeight){
 	this.Text = [];
-	this.cursor = index;
+	this.CursorIndex = 0;
+	this.centerX = initalX;
+	this.centerY = initalY;
+	this.boxWidth = initialWidth;
+	this.boxHeight = initialHeight;
 	this.add = function(text,index){
 		this.Text.splice(index,0,text);
 		//adding a single character at the desired index
@@ -71,20 +94,51 @@ function TextBox(){
 		this.Text = tempone.concat(temptwo);
 		//removing a single character at the desired index
 	};
+	this.moveCursor = function(index){
+		this.CursorIndex = index;
+	}
 }
 //objects stop -----------------------------------------------
 
 let mainWindow; 
 let addWindow;
 let removeWindow;
-let currentDeck = new Deck("initial_deck");
+let presentWindow;
+let currentDeck;
 
 // listen for the app to be ready
 app.on('ready',function(){ 					//(1)open up a new deck
 						   					//(1)mainWindow display the deck
+	const {ScreenWidth,ScreenHeigh} = electron.screen.getPrimaryDisplay().workAreaSize;
+	currentDeck = new Deck("initial_deck");
 	//create new window
-	mainWindow = new BrowserWindow({});
-	//currentDeck = objects.getDeck("inital_deck");
+	mainWindow = new BrowserWindow({
+		width: 1980,
+		height:1120
+	});
+	mainWindow.maximize();
+	mainWindow.once('ready-to-show',function(){
+		mainWindow.show();
+	})
+	const exitFullScreen = globalShortcut.register('Esc',function(){
+		if(BrowserWindow.getFocusedWindow() == presentWindow){
+			Menu.setApplicationMenu(mainMenu);
+			presentWindow.close();
+		}
+	});
+	const nextSlide = globalShortcut.register('CmdOrCtrl+Right',function(){
+		if(BrowserWindow.getFocusedWindow() == mainWindow){
+			currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()+1);
+		}
+	});
+	const previousSlide = globalShortcut.register('CmdOrCtrl+Left',function(){
+		if(BrowserWindow.getFocusedWindow() == mainWindow){
+			currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()-1);
+		}
+	});
+	const exitApp = globalShortcut.register('CmdOrCtrl+Q',function(){
+		mainWindow.close();
+	})
 	//load html file into window
 	mainWindow.loadURL(url.format({
 		pathname: path.join(__dirname,'mainWindow.html'),
@@ -98,12 +152,13 @@ app.on('ready',function(){ 					//(1)open up a new deck
 
 	//build menu from template
 	const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
+	//const PresentationMenu = Menu.buildFromTemplate(PresentationMenuTemplate);
 	//insert the menu
 	Menu.setApplicationMenu(mainMenu);
 });
 
 //handle create add window
-function createAddWindow(){ 				//(1)modifiy to add slide to current deck
+function createAddWindow(){
 	//create new window
 	addWindow = new BrowserWindow({
 		width: 300,
@@ -143,16 +198,49 @@ function createRemoveWindow(){
 
 //catch item add
 ipcMain.on('item:add',function(e,item,index){
-	currentDeck.addSlide(item,index,currentDeck.size);
-	mainWindow.webContents.send('item:add',item);
+	currentDeck.addSlide(new Slide(item,index),currentDeck.getSize());
+	mainWindow.webContents.send('item:add',currentDeck.display());
 	addWindow.close();
 });
 
-ipcMain.on('item:remove',function(e,item){
-	currentDeck.removeSlide(item,currentDeck.size);
-	mainWindow.webContents.send('item:remove',item);
+ipcMain.on('item:remove',function(e,index){
+	currentDeck.removeSlide(index);
+	mainWindow.webContents.send('item:remove',currentDeck.getSize());
 	removeWindow.close();
 });
+
+function PresentFullScreen(){
+	//create new window
+	presentWindow = new BrowserWindow({
+		width: 300,
+		height:300,
+		title:'Presenting'
+	});
+	presentWindow.setFullScreen(true);
+	Menu.setApplicationMenu(null);
+	//load html file into window
+	presentWindow.loadURL(url.format({
+		pathname: path.join(__dirname,'presentWindow.html'),
+		protocol: 'file:',
+		slashes: true
+	}));
+	//garbage collection handle
+	presentWindow.on('close',function(){
+		presentWindow = null;
+	});
+	//stuff here for presenting fullscreen
+}
+
+//these two functions are very similar windows to the add and remove windows(mostly likely just copy and change some stuff)
+function Save(){
+	console.log("save the slide deck");
+	//add thing here for a new window that asks the for the deck title to save it and all that shit
+}
+
+function newSlideDeck(){
+	console.log("add new Slide Deck");
+	//add thing here for a new window that asks for the new deck title and all that shit
+}
 
 //create menu template
 const mainMenuTemplate = [
@@ -160,30 +248,74 @@ const mainMenuTemplate = [
 		label:'File',
 		submenu:[
 			{
+				label: 'New Slide Deck',
+				accelerator: 'CmdOrCtrl+N',
+				click(){
+					newSlideDeck();
+				}
+			},
+			{
+				label:'Save',
+				accelerator: 'CmdOrCtrl+S',
+				click(){
+					Save();
+				}
+			},
+			{
+				label:'Quit',
+				accelerator: 'CmdOrCtrl+Q',
+				click(){
+					app.quit();
+				}
+			}
+		]
+	},
+	{
+		label: 'Slides',
+		submenu:[
+			{
 				label:'Add Slide',
-				accelerator: process.platform == 'darwin' ? 'Command++' : 'Ctrl++',
+				accelerator: 'CmdOrCtrl+Shift+=',
 				click(){
 					createAddWindow();
 				}
 			},
 			{
 				label:'Remove Slide',
-				accelerator: process.platform == 'darwin' ? 'Command+-' : 'Ctrl+-',
+				accelerator: 'CmdOrCtrl+Shift+-',
 				click(){
 					createRemoveWindow();
 				}
 			},
 			{
-				label:'Clear Slides'
+				label:'Go to next Slide',
+				accelerator: 'CmdOrCtrl+Right',
+				click(){
+					currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()+1);
+				}
 			},
 			{
-				label:'Quit',
-				accelerator: process.platform == 'darwin' ? 'Command+Q' : 'Ctrl+Q',
+				label:'Go to previous Slide',
+				accelerator: 'CmdOrCtrl+Left',
 				click(){
-					app.quit();
+					currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()-1);
 				}
-			}
+			},
+			{
+				label:'Clear Slides'
+			},
 		]
+	},
+	{
+		label:'Presenting',
+		submenu:[
+		{
+			label:'Present FullScreen',
+			accelerator: 'CmdOrCtrl+Shift+P',
+			click(){
+				PresentFullScreen();
+			}
+		}]
 	}
 ];
 

@@ -20,8 +20,8 @@
 
 		function submitForm(e){
 			e.preventDefault();
-			const item = document.querySelector('#item').value;
-			ipcRenderer.send('item:remove',item);
+			const index = document.querySelector('#item').value;
+			ipcRenderer.send('item:remove',index);
 		}
 	</script>
 </body>

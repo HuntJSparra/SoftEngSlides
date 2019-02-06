@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>Testing Window</title>
+	<title>Name of Product Here</title>
 </head>
 <body>
-	<h1>Title Here</h1>
+	<h1>Current Slide Deck</h1>
 	<ul></ul>
 </body>
 <script>
@@ -13,14 +13,12 @@
 	const {ipcRenderer} = electron;
 	const ul = document.querySelector('ul');
 
-	ipcRenderer.on('item:add',function(e,item,number){
-		const li = document.createElement('li');
-		const itemText = document.createTextNode(item+" "+number);
-		li.appendChild(itemText);
-		ul.appendChild(li);
+	ipcRenderer.on('item:add',function(e,item){
+		const itemText = document.createTextNode(item);
+		ul.innerHTML = itemText;
 	});
 
-	ipcRenderer.on('item:remove',function(e,item,number){
+	ipcRenderer.on('item:remove',function(e,number){
 		const li = document.createElement('li');
 		const itemText = document.createTextNode("remove "+number);
 		li.appendChild(itemText);
