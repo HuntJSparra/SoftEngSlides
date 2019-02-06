@@ -4,10 +4,13 @@ const electronLocalShortcut = require('electron-localshortcut'); //specifically 
 const url = require('url'); //an imported thing for urls that make things easier
 const path = require('path'); //same as the url import but with system paths
 const fs = require('fs'); // import for writting things to files
+//const remote = require('remote');
+//sconst dialog = require('dialog');
 
 //this creates items from the electron system
 const {app, BrowserWindow, Menu, ipcMain, globalShortcut} = electron;
-
+const remote = require('electron').remote;
+const {dialog} = electron;
 //objects start ----------------------------------------------
 //this function just creates a new Slide Deck
 function getNewDeck(deckName){
@@ -67,6 +70,9 @@ function Deck(deckName){
 		else{
 			return this.slides[this.currentSlide].display();
 		}
+	};
+	this.jsonify = function(){ //this function makes the current deck object into json format and passes that on
+		return JSON.stringify(this);
 	};
 }
 
@@ -129,6 +135,7 @@ let mainWindow;
 let addWindow;
 let removeWindow;
 let presentWindow;
+let loadSavedWindow;
 let currentDeck;
 
 // listen for the app to be ready
@@ -263,6 +270,11 @@ ipcMain.on('saving',function(e,item){
 	savingWindow.close(); //closes the saving window
 });
 
+ipcMain.on('loading',function(e,item){
+	openSavedFile(item);
+	loadSavedWindow.close();
+})
+
 //a catch function for simply updating the mainWindow whenever a change happens and isn't caught by anything else
 function update(){
 	mainWindow.webContents.send('update',currentDeck.display()); //send information to ipcRenderer with the 'update' tag in mainWindow.html
@@ -270,8 +282,68 @@ function update(){
 
 //function to create a save the save file for the user
 function createAndSaveFile(SlideDeck){
-	//not filled yet
+	const JSONfile = SlideDeck.jsonify();
+	fs.writeFile(SlideDeck.deckName+".json",JSONfile,function(err){
+		if(err){
+			//break
+		}
+		else{
+			console.log("hooray you did it")
+		}
+	});
 }
+
+function openSavedFile(fileName,filePath){
+	dialog.showOpenDialog(function(fileName){
+		if(fileName === undefined){
+			console.log("congrats, it broke (undefined)");
+			return;
+		}
+
+		fs.readFile(filePath, 'JSON', function(err,data){ //JSON apparently isnt a valid encoding change later
+			if(err){
+				console.log("congrats, it broke (error in reading file)");
+				return;
+			}
+
+			console.log("the file has been read (should be)");
+		})
+	})
+}
+
+/*
+function openSavedFile(input){
+	var input, file, fr;
+
+	console.log("start trying to open the file");
+	if(!input){
+		//break
+		console.log("not working first error");
+	}
+	else if(!input.files){
+		//break
+		console.log("not working second error");
+	}
+	else if(!input[0]){
+		//break
+		console.log("not working third error");
+	}
+	else{
+		file = input[0];
+		fr = new FileReader();
+		fr.onload = getText();
+		fr.readAsText(file);
+		console.log("end of the line bub");
+	}
+
+	function getText(e){
+		let lines = e.target.result;
+		var text = JSON.parse(lines);
+		console.log("end of get text");
+		return text;
+	}
+}
+*/
 
 //this function start presentaion mode
 function PresentFullScreen(){
@@ -323,6 +395,26 @@ function createWebsiteWindow(){
 	//garbage collection handle
 	websiteWindow.on('close',function(){
 		websiteWindow = null;
+	});
+}
+
+function openSavedFileWindow(){
+	//create new window
+	loadSavedWindow = new BrowserWindow({
+		width: 300,
+		height:300,
+		title:'open saved File'
+	});
+
+	loadSavedWindow.loadURL(url.format({
+		pathname: path.join(__dirname,'loadSavedWindow.html'),
+		protocol: 'file:',
+		slashes: true
+	}));
+
+	//garbage collection handle
+	loadSavedWindow.on('close',function(){
+		loadSavedWindow = null;
 	});
 }
 
@@ -389,6 +481,13 @@ const mainMenuTemplate = [
 				accelerator: 'CmdOrCtrl+S',
 				click(){
 					Save();
+				}
+			},
+			{
+				label:'Open',
+				accelerator: 'CmdOrCtrl+O',
+				click(){
+					openSavedFileWindow();
 				}
 			},
 			{
