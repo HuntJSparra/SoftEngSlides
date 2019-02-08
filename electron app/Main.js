@@ -4,17 +4,28 @@ const electronLocalShortcut = require('electron-localshortcut'); //specifically 
 const url = require('url'); //an imported thing for urls that make things easier
 const path = require('path'); //same as the url import but with system paths
 const fs = require('fs'); // import for writting things to files
-//const remote = require('remote');
-//sconst dialog = require('dialog');
 
 //this creates items from the electron system
 const {app, BrowserWindow, Menu, ipcMain, globalShortcut} = electron;
-const remote = require('electron').remote;
-const {dialog} = electron;
 //objects start ----------------------------------------------
 //this function just creates a new Slide Deck
 function getNewDeck(deckName){
 	return new Deck(deckName);
+}
+
+function recreate(json){
+	var tempName = json.deckName;
+	var tempSlides = json.slides;
+	var tempCurrentSlide = json.currentSlide;
+	var tempSlideObjects = [];
+	for(var i = 0; i < tempSlides.length; i++){
+		tempSlideObjects.push(new Slide(tempSlides[i].Slidetitle,tempSlides[i].Slideindex));
+		tempSlideObjects[i].addTextBox(tempSlides[i].textBox); //temp function will be changed later
+	}
+	currentDeck = new Deck(tempName);
+	currentDeck.setSlides(tempSlideObjects);
+	currentDeck.changeCurrentSlide(tempCurrentSlide);
+	console.log(currentDeck);
 }
 
 //the Deck object
@@ -28,6 +39,9 @@ function Deck(deckName){
 	this.getSlide = function(index){ //a getter function that grabs a specific slide based on the index given
 		return this.slides[index];
 	};
+	this.setSlides = function(newSlides){
+		this.slides = newSlides;
+	}
 	this.addSlide = function(slide,index){ //adds a slide to the slide deck at the specified index
 		this.slides.splice(index,0,slide); //the actual insertion of the slide
 		this.changeCurrentSlide(index); 
@@ -87,6 +101,9 @@ function Slide(slideName,index){
 	this.setTitle = function(newSlideName){ //a function to change the title of the slide
 		this.Slidetitle = newSlideName;
 	};
+	this.addTextBox = function(textBox){
+		this.textBox = textBox;
+	};
 	this.addToTextBox = function(text,index){ //a function to adds text to the text box, currently no interace to use this
 		this.textBox.add(text,index);		  //just here for the future to make things easier
 	};
@@ -97,10 +114,7 @@ function Slide(slideName,index){
 		this.Slideindex = new Number(newIndex);
 	};
 	this.display = function(){ //the display function for the slide, for right now just returns the slide title and slide index
-		const list = [];
-		list.push(this.Slidetitle);
-		list.push(this.Slideindex);
-		return list.join(", ");
+		return this;
 		//be sure to also display the text box (later)
 	};
 }
@@ -126,7 +140,10 @@ function TextBox(initalX,initalY,initialWidth,initialHeight){
 	};
 	this.moveCursor = function(index){ //function for moving the cursor within the textbox
 		this.CursorIndex = index;
-	}
+	};
+	this.getText = function(){
+		return this.Text.join("");
+	};
 }
 //objects stop -----------------------------------------------
 
@@ -141,6 +158,7 @@ let currentDeck;
 // listen for the app to be ready
 app.on('ready',function(){
 	const {ScreenWidth,ScreenHeigh} = electron.screen.getPrimaryDisplay().workAreaSize;
+	console.log("");
 	//create the initial deck
 	currentDeck = new Deck("initial_deck");
 	//create new window
@@ -247,7 +265,12 @@ function createRemoveWindow(){
 //catch item add, this comes from the addWindow.html file, specifically the ipcrenderer.send function
 ipcMain.on('item:add',function(e,item,index){
 	currentDeck.addSlide(new Slide(item,index),currentDeck.getSize()); //calls on the deck function for adding a new slide
-	mainWindow.webContents.send('item:add',currentDeck.display()); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
+	var currentSlide = currentDeck.display();
+	console.log("current Slide"+currentSlide);
+	console.log("title"+currentSlide.Slidetitle);
+	console.log("textBox"+currentSlide.textBox);
+	mainWindow.webContents.send('item:add',currentSlide.Slidetitle,""); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
+	console.log("after sending info");
 	addWindow.close(); //closes the addWindow
 });
 
@@ -272,6 +295,7 @@ ipcMain.on('saving',function(e,item){
 
 ipcMain.on('loading',function(e,item){
 	openSavedFile(item);
+	mainWindow.webContents.send('update',currentDeck.display());
 	loadSavedWindow.close();
 })
 
@@ -282,68 +306,27 @@ function update(){
 
 //function to create a save the save file for the user
 function createAndSaveFile(SlideDeck){
-	const JSONfile = SlideDeck.jsonify();
+	const JSONfile = SlideDeck.jsonify(); 
 	fs.writeFile(SlideDeck.deckName+".json",JSONfile,function(err){
 		if(err){
 			//break
 		}
 		else{
-			console.log("hooray you did it")
+			//console.log("hooray you did it");
 		}
 	});
 }
 
-function openSavedFile(fileName,filePath){
-	dialog.showOpenDialog(function(fileName){
-		if(fileName === undefined){
-			console.log("congrats, it broke (undefined)");
-			return;
-		}
-
-		fs.readFile(filePath, 'JSON', function(err,data){ //JSON apparently isnt a valid encoding change later
-			if(err){
-				console.log("congrats, it broke (error in reading file)");
-				return;
-			}
-
-			console.log("the file has been read (should be)");
-		})
-	})
-}
-
-/*
 function openSavedFile(input){
-	var input, file, fr;
-
-	console.log("start trying to open the file");
-	if(!input){
-		//break
-		console.log("not working first error");
-	}
-	else if(!input.files){
-		//break
-		console.log("not working second error");
-	}
-	else if(!input[0]){
-		//break
-		console.log("not working third error");
-	}
-	else{
-		file = input[0];
-		fr = new FileReader();
-		fr.onload = getText();
-		fr.readAsText(file);
-		console.log("end of the line bub");
-	}
-
-	function getText(e){
-		let lines = e.target.result;
-		var text = JSON.parse(lines);
-		console.log("end of get text");
-		return text;
-	}
+	fs.readFile(input,function(err,data){
+		if(err){
+			return console.log(err);
+		}
+		var jsonData = JSON.parse(data);
+		recreate(jsonData);
+	});
 }
-*/
+
 
 //this function start presentaion mode
 function PresentFullScreen(){

@@ -16,7 +16,6 @@
 		//then the next two things below this line are making sure that the script section has what it needs
 		const electron = require('electron');
 		const {ipcRenderer} = electron;
-
 		//this stuff grabs the information from the for when the user hits submit
 		const form = document.querySelector('form');
 		form.addEventListener('submit',submitForm);//and this uses that information to call the function below
@@ -24,8 +23,8 @@
 		//the function for submiting the information to the main.js file
 		function submitForm(e){
 			e.preventDefault(); //forms by default want to save to a file, this prevents that
-			const item = document.querySelector('#item').value; //grabs the the slide deck title and saves it into constant item
-			ipcRenderer.send('loading',item); //sends the item to the main.js file, specifically ipcMain with the tag 'saving'
+			const file = document.querySelector('#item').files[0].name; //grabs the the slide deck title and saves it into constant item
+			ipcRenderer.send('loading',file); //sends the item to the main.js file, specifically ipcMain with the tag 'saving'
 		}
 	</script>
 </body>
