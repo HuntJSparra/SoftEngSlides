@@ -253,6 +253,7 @@ app.on('ready',function(){
 	const {ScreenWidth,ScreenHeigh} = electron.screen.getPrimaryDisplay().workAreaSize;
 	console.log("");
 	//create the initial deck
+	//initialization();
 	currentDeck = new Deck("initial_deck");
 	//create new window
 	mainWindow = new BrowserWindow({
@@ -382,9 +383,8 @@ ipcMain.on('saving',function(e,item){
 	savingWindow.close(); //closes the saving window
 });
 
-ipcMain.on('loading',function(e,item){
+ipcMain.on('loading',function(e,item){	
 	openSavedFile(item);
-	mainWindow.webContents.send('update',deckDisplay(currentDeck));
 	loadSavedWindow.close();
 })
 
@@ -414,6 +414,7 @@ function openSavedFile(input){
 		var jsonData = JSON.parse(data);
 		recreate(jsonData);
 		currentDeck = jsonData;
+		update();
 	});
 }
 
@@ -624,4 +625,16 @@ const mainMenuTemplate = [
 //if mac add empty object to menu
 if(process.platform == 'darwin'){
 	mainMenuTemplate.unshift({});
+}
+
+//hopefully this function will fix the complete and utter bullshit happening when loading a file
+function initialization(){
+	currentDeck = new Deck("initial_deck");
+	addSlidetoDeck(currentDeck,new Slide("insert Title",0),0);
+}
+
+function toWastTime(){
+	console.log("blahblahblahblah");
+	console.log("on wait did I forget to say?");
+	console.log("blah");
 }

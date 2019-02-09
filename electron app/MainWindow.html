@@ -59,6 +59,28 @@
 				li.appendChild(itemText);
 				ul.appendChild(li);
 			});
+
+			ipcRenderer.on('update',function(e,info){
+				const CurrentSlide = document.createElement('div');
+				const slideTitle = document.createElement('h1');
+				const slideText = document.createElement('p');
+
+				CurrentSlide.className = "slide";
+				slideTitle.className = "slide-title";
+				slideText.className = "slide-text";
+
+				slideTitle.append(info[0]);
+				slideText.append(info[2]);
+
+				slideTitle.contentEditable = "true";
+				slideText.contentEditable = "true";
+
+				CurrentSlide.appendChild(slideTitle);
+				CurrentSlide.appendChild(slideText);
+
+				ul.innerHTML = "";
+				ul.appendChild(CurrentSlide);
+			})
 		</script>
 	</body>
 </html>
