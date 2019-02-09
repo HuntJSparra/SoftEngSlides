@@ -14,6 +14,12 @@ function getNewDeck(deckName){
 }
 
 function recreate(json){
+	tempName = json.deckName;
+	console.log(tempName);
+}
+
+/*
+function recreate(json){
 	var tempName = json.deckName;
 	var tempSlides = json.slides;
 	var tempCurrentSlide = json.currentSlide;
@@ -27,12 +33,92 @@ function recreate(json){
 	currentDeck.changeCurrentSlide(tempCurrentSlide);
 	console.log(currentDeck);
 }
+*/
+
+//object methods
+
+//deck methods
+function addSlidetoDeck(deck,slide,index){
+	deck.slides.splice(index,0,slide); //the actual insertion of the slide
+	changeCurrentSlide(deck,index); 
+	for(currentIndex = 0; currentIndex < deck.slides.length; currentIndex++){ //this for loop updates all the slide indexs so that
+		deck.slides[currentIndex].Slideindex = currentIndex;					  //all the slides have their correct index
+	}
+}
+
+function removeSlidefromDeck(deck,index){
+	tempone = deck.slides.slice(0,index); //this breaks off the front end of the list before the to be removed slide
+	temptwo = deck.slides.slice(index);	  //this breaks off the list starting at the to be removed slide and everything after
+	temptwo.shift();					  //this removed the slide no longer wanted and makes the second list smaller by one
+	deck.slides = tempone.concat(temptwo);//this combines the two lists broken off from this.slides and sets this.slides equal to it again
+			//everything above had to be done so that there wasn't empty slot inside of the this.slides list which is what delete would do
+	for(currentIndex = 0; currentIndex < deck.slides.length; currentIndex++){ //this does the same thing as the for loop in addSlide
+		deck.slides[currentIndex].Slideindex = currentIndex;
+	}
+	if(deck.currentSlide >= deck.slides.length){ //this makes sure that the current slide is not pointing to outside the slides
+		deck.currentSlide = deck.slides.length-1;
+	}
+	if(deck.currentSlide < 0){	//same with this one just in the other direction
+		deck.currentSlide = 0;
+	}
+}
+
+function changeCurrentSlide(deck,index){
+	deck.currentSlide = index;
+	if(deck.currentSlide > deck.slides.length-1){//just like in the removeSlide function, with the same purpose
+		deck.currentSlide = deck.slides.length-1	;
+	}
+	if(deck.currentSlide < 0){ //same here
+		deck.currentSlide = 0;
+	}
+}
+
+function deckDisplay(deck){
+	console.log(deck.slides[deck.currentSlide]);
+	return slideDisplay(deck.slides[deck.currentSlide]);
+}
+
+function jsonifytheDeck(deck){
+	return JSON.stringify(deck);
+}
+
+//slide methods
+function addTextBox(slide,textbox,index){
+	slide.textboxes.splice(index,0,textbox);
+}
+
+function removeTextBox(slide,index){
+	tempone = slide.textboxes.slice(0,index);
+	temptwo = slide.textboxes.slice(index);
+	temptwo.shift();
+	slide.textboxes = tempone.concat(temptwo);
+}
+
+function slideDisplay(slide){
+	tempList = [];
+	tempList.push(slide.Slidetitle);
+	tempList.push(slide.Slideindex);
+	tempList.push(slide.textboxes);
+	return tempList;
+}
+
+//textbox methods
+function addtoTextBox(textbox,index){
+	//stuff and things
+}
+
+function removefromTextBox(textbox,index){
+	//stuff and things
+}
 
 //the Deck object
 function Deck(deckName){
 	this.deckName = deckName; //the deckName
 	this.slides = []; //the slides in the slide deck
 	this.currentSlide = 0; //the current slide that is being shown or edited
+
+	//commented out for now, maybe deleted later
+	/*
 	this.getSize = function(){ //a getter function that grabs the total number of slides in the deck
 		return this.slides.length;
 	};
@@ -88,13 +174,16 @@ function Deck(deckName){
 	this.jsonify = function(){ //this function makes the current deck object into json format and passes that on
 		return JSON.stringify(this);
 	};
+	*/
 }
 
 //the Slide object
 function Slide(slideName,index){
 	this.Slidetitle = slideName; //the title of this slide, can be just "" (empty title)
 	this.Slideindex = new Number(index); //the index that this slide is, the new Number thing is just to make sure it is a number
-	this.textBox = new TextBox(); // the text box in this slide, maybe in the future this will be a list of things inside the slide
+	this.textboxes = []; // the text box in this slide, maybe in the future this will be a list of things inside the slide
+
+	/*
 	this.getIndex = function(){ //just a function to return the slide's index
 		return this.Slideindex;
 	};
@@ -117,6 +206,7 @@ function Slide(slideName,index){
 		return this;
 		//be sure to also display the text box (later)
 	};
+	*/
 }
 
 //the Text Box object (this is not entirly done yet, some for functionally has to be added)
@@ -127,6 +217,8 @@ function TextBox(initalX,initalY,initialWidth,initialHeight){
 	this.centerY = initalY; //the y value of where the textbox is when it is initially added
 	this.boxWidth = initialWidth; //the width value of the textbox when it is initially added
 	this.boxHeight = initialHeight; //the height value of the textbox when it is initally added
+
+	/*
 	this.add = function(text,index){ //function for adding text to the textbox
 		this.Text.splice(index,0,text);
 		//adding a single character at the desired index
@@ -144,6 +236,7 @@ function TextBox(initalX,initalY,initialWidth,initialHeight){
 	this.getText = function(){
 		return this.Text.join("");
 	};
+	*/
 }
 //objects stop -----------------------------------------------
 
@@ -183,14 +276,14 @@ app.on('ready',function(){
 	});
 	const nextSlide = globalShortcut.register('CmdOrCtrl+Right',function(){//this shortcut is to advance the current slide by one
 		if(BrowserWindow.getFocusedWindow() == mainWindow){
-			currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()+1);
+			changeCurrentSlide(currentDeck,currentDeck.currentSlide-1);
 			update();
 			console.log("shifted Slide to next");
 		}
 	});
 	const previousSlide = globalShortcut.register('CmdOrCtrl+Left',function(){//this shortcut is to bring the current slide back by one
 		if(BrowserWindow.getFocusedWindow() == mainWindow){
-			currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()-1);
+			changeCurrentSlide(currentDeck,currentDeck.currentSlide-1);
 			update();
 			console.log("shifted Slide to previous");
 		}
@@ -264,26 +357,22 @@ function createRemoveWindow(){
 
 //catch item add, this comes from the addWindow.html file, specifically the ipcrenderer.send function
 ipcMain.on('item:add',function(e,item,index){
-	currentDeck.addSlide(new Slide(item,index),currentDeck.getSize()); //calls on the deck function for adding a new slide
-	var currentSlide = currentDeck.display();
-	console.log("current Slide"+currentSlide);
-	console.log("title"+currentSlide.Slidetitle);
-	console.log("textBox"+currentSlide.textBox);
-	mainWindow.webContents.send('item:add',currentSlide.Slidetitle,""); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
-	console.log("after sending info");
+	addSlidetoDeck(currentDeck,new Slide(item,index),index); //calls on the deck function for adding a new slide
+	var currentSlideDisplayed = deckDisplay(currentDeck);
+	mainWindow.webContents.send('item:add',currentSlideDisplayed); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
 	addWindow.close(); //closes the addWindow
 });
 
 //catch item remove, this comes from the removeWindow.html file, specifically the ipcRenderer.send function
 ipcMain.on('item:remove',function(e,index){
-	currentDeck.removeSlide(index); //calls on the deck function for removing a slide
-	mainWindow.webContents.send('item:remove',currentDeck.display()); //send information to ipcRenderer with the 'item:remove' tag in mainWindow.html
+	removeSlidefromDeck(currentDeck,index); //calls on the deck function for removing a slide
+	mainWindow.webContents.send('item:remove',deckDisplay(currentDeck)); //send information to ipcRenderer with the 'item:remove' tag in mainWindow.html
 	removeWindow.close(); //closes the removeWindow
 });
 
 ipcMain.on('newSlideDeck',function(e,item){
 	currentDeck = getNewDeck(item); //creates a new slide deck and makes it the current one
-	mainWindow.webContents.send('update',currentDeck.display()); //sends information to ipcRenderer with the 'update' tag in mainWindow.html
+	mainWindow.webContents.send('update',deckDisplay(currentDeck)); //sends information to ipcRenderer with the 'update' tag in mainWindow.html
 	newSlideDeckWindow.close(); //closes the new slide deck window
 });
 
@@ -295,18 +384,18 @@ ipcMain.on('saving',function(e,item){
 
 ipcMain.on('loading',function(e,item){
 	openSavedFile(item);
-	mainWindow.webContents.send('update',currentDeck.display());
+	mainWindow.webContents.send('update',deckDisplay(currentDeck));
 	loadSavedWindow.close();
 })
 
 //a catch function for simply updating the mainWindow whenever a change happens and isn't caught by anything else
 function update(){
-	mainWindow.webContents.send('update',currentDeck.display()); //send information to ipcRenderer with the 'update' tag in mainWindow.html
+	mainWindow.webContents.send('update',deckDisplay(currentDeck)); //send information to ipcRenderer with the 'update' tag in mainWindow.html
 }
 
 //function to create a save the save file for the user
 function createAndSaveFile(SlideDeck){
-	const JSONfile = SlideDeck.jsonify(); 
+	const JSONfile = jsonifytheDeck(SlideDeck); 
 	fs.writeFile(SlideDeck.deckName+".json",JSONfile,function(err){
 		if(err){
 			//break
@@ -324,6 +413,7 @@ function openSavedFile(input){
 		}
 		var jsonData = JSON.parse(data);
 		recreate(jsonData);
+		currentDeck = jsonData;
 	});
 }
 
@@ -503,14 +593,14 @@ const mainMenuTemplate = [
 				label:'Go to next Slide',
 				accelerator: 'CmdOrCtrl+Right',
 				click(){
-					currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()+1);
+					changeCurrentSlide(currentDeck.currentSlide+1);
 				}
 			},
 			{
 				label:'Go to previous Slide',
 				accelerator: 'CmdOrCtrl+Left',
 				click(){
-					currentDeck.changeCurrentSlide(currentDeck.getSlideIndex()-1);
+					changeCurrentSlide(currentDeck.currentSlide-1);
 				}
 			},
 			{
