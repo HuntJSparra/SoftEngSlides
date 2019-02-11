@@ -30,14 +30,22 @@
 				ipcRenderer.send('MainReady',null);
 			}
 
+			function sendSlideUpdate(index,theChildren){
+				listTemp = [];
+				listTemp.push(index);
+				listTemp.push(theChildren[0].value);
+				listTemp.push(theChildren[1].value);
+				ipcRenderer.send('singleSlideUpdate',listTemp);
+			}
+
 			ipcRenderer.on('load',function(e,info){
 				ul.innerHTML = "";
 				for(var index in info){
 					item = info[index];
 					//make the div and text for the slide
 					const newSlide = document.createElement('div');
-					const itemTitle = document.createElement('h1');
-					const itemText = document.createElement('p');
+					const itemTitle = document.createElement('textarea');
+					const itemText = document.createElement('textarea');
 
 					//set their classes
 					newSlide.className = "slide";
@@ -46,19 +54,24 @@
 
 					//populate the text
 					itemTitle.append(item[0]);
-					ul.append(item[0]);
 					itemText.append(item[2]);
 
 					//make the text editable
 					itemTitle.contentEditable= "true";
 					itemText.contentEditable = "true";
 
+					itemTitle.onchange = function(){sendSlideUpdate(index,itemTitle.parentNode.childNodes)}
+					itemText.onchange = function(){sendSlideUpdate(index,itemText.parentNode.childNodes)}
+
 					//add them to the slide
 					newSlide.appendChild(itemTitle);
 					newSlide.appendChild(itemText);
 
+					//newSlide.onchange = function(){sendSlideUpdate(index,this)};
+
 					//add the new slide to the list
 					ul.append(newSlide);
+					ul.appendChild(document.createElement('br'));
 				}
 			});
 

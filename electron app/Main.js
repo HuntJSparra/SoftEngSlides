@@ -309,10 +309,11 @@ ipcMain.on('item:add',function(e,item,index,codeOrNo,language){
 	if(codeOrNo == "not"){
 		codeOrNo = false;
 	}
-	console.log(currentDeck.slides);
+	//console.log(currentDeck.slides);
 	addSlidetoDeck(currentDeck,new Slide(item,currentDeck.index,codeOrNo,getLanguageCode(language)),index); //calls on the deck function for adding a new slide
 	currentDeck.slides[index].textboxes = "insert text here";
-	mainWindow.webContents.send('pleaseSend',null);
+	//mainWindow.webContents.send('pleaseSend',null);
+	//console.log(currentDeck.slides);
 	mainWindow.webContents.send('load',createListForDisplayingOnMain()); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
 	addWindow.close(); //closes the addWindow
 });
@@ -350,6 +351,7 @@ ipcMain.on('MainReady',function(e,item){
 	update();
 });
 
+/*
 ipcMain.on('SlideDeckUpdates',function(e,item){
 	for(var index = 0; index < item.length; index++){
 		tempList = item[index];
@@ -367,6 +369,13 @@ ipcMain.on('SlideDeckUpdates',function(e,item){
 		//nothing
 	}
 });
+*/
+
+ipcMain.on('singleSlideUpdate',function(e,item){
+	currentDeck.slides[item[0]] = new Slide(item[1],item[0],false,null);
+	currentDeck.slides[item[0]].textboxes = item[2];
+	console.log(currentDeck.slides);
+})
 
 //a catch function for simply updating the mainWindow whenever a change happens and isn't caught by anything else
 function update(){
@@ -388,7 +397,6 @@ function createListForDisplayingOnMain(){
 		tempList1.push(list.textboxes);
 		finalList.push(tempList1);
 	}
-	console.log(finalList);
 	return finalList;
 }
 
