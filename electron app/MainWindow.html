@@ -30,37 +30,6 @@
 				ipcRenderer.send('MainReady',null);
 			}
 
-			ipcRenderer.on('item:add',function(e,info){
-				ul.innerHTML = "";
-				for(var index in info){
-					item = info[index];
-					//make the div and text for the slide
-					const newSlide = document.createElement('div');
-					const itemTitle = document.createElement('h1');
-					const itemText = document.createElement('p');
-
-					//set their classes
-					newSlide.className = "slide";
-					itemTitle.className = "slide-title";
-					itemText.className = "slide-text";
-
-					//populate the text
-					itemTitle.append(item[0]);
-					itemText.append(item[2]);
-
-					//make the text editable
-					itemTitle.contentEditable= "true";
-					itemText.contentEditable = "true";
-
-					//add them to the slide
-					newSlide.appendChild(itemTitle);
-					newSlide.appendChild(itemText);
-
-					//add the new slide to the list
-					ul.append(newSlide);
-				}
-			});
-
 			ipcRenderer.on('load',function(e,info){
 				ul.innerHTML = "";
 				for(var index in info){
@@ -77,6 +46,7 @@
 
 					//populate the text
 					itemTitle.append(item[0]);
+					ul.append(item[0]);
 					itemText.append(item[2]);
 
 					//make the text editable

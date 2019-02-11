@@ -25,7 +25,7 @@ function addSlidetoDeck(deck,slide,index){
 	deck.slides.splice(index,0,slide); //the actual insertion of the slide
 	changeCurrentSlide(deck,index); 
 	for(currentIndex = 0; currentIndex < deck.slides.length; currentIndex++){ //this for loop updates all the slide indexs so that
-		deck.slides[currentIndex].Slideindex = currentIndex;					  //all the slides have their correct index
+		deck.slides[currentIndex].Slideindex = currentIndex;				  //all the slides have their correct index
 	}
 }
 
@@ -309,17 +309,18 @@ ipcMain.on('item:add',function(e,item,index,codeOrNo,language){
 	if(codeOrNo == "not"){
 		codeOrNo = false;
 	}
+	console.log(currentDeck.slides);
 	addSlidetoDeck(currentDeck,new Slide(item,currentDeck.index,codeOrNo,getLanguageCode(language)),index); //calls on the deck function for adding a new slide
 	currentDeck.slides[index].textboxes = "insert text here";
 	mainWindow.webContents.send('pleaseSend',null);
-	mainWindow.webContents.send('item:add',createListForDisplayingOnMain()); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
+	mainWindow.webContents.send('load',createListForDisplayingOnMain()); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
 	addWindow.close(); //closes the addWindow
 });
 
 //catch item remove, this comes from the removeWindow.html file, specifically the ipcRenderer.send function
 ipcMain.on('item:remove',function(e,index){
 	removeSlidefromDeck(currentDeck,index); //calls on the deck function for removing a slide
-	mainWindow.webContents.send('item:add',createListForDisplayingOnMain()); //send information to ipcRenderer with the 'item:remove' tag in mainWindow.html
+	mainWindow.webContents.send('load',createListForDisplayingOnMain()); //send information to ipcRenderer with the 'item:remove' tag in mainWindow.html
 	removeWindow.close(); //closes the removeWindow
 });
 
@@ -359,8 +360,11 @@ ipcMain.on('SlideDeckUpdates',function(e,item){
 	if(BrowserWindow.getFocusedWindow() == mainWindow){
 		update();
 	}
-	else{
+	if(BrowserWindow.getFocusedWindow() == presentWindow){
 		updatePresenting();
+	}
+	else{
+		//nothing
 	}
 });
 
@@ -384,6 +388,7 @@ function createListForDisplayingOnMain(){
 		tempList1.push(list.textboxes);
 		finalList.push(tempList1);
 	}
+	console.log(finalList);
 	return finalList;
 }
 
