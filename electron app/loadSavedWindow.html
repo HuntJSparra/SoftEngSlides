@@ -24,8 +24,6 @@
 		function submitForm(e){
 			e.preventDefault(); //forms by default want to save to a file, this prevents that
 			const file = document.querySelector('#item').files[0].name;
-			//.value
-			//.replace("C:\\fakepath\\",""); //grabs the the slide deck title and saves it into constant item
 			ipcRenderer.send('loading',file); //sends the item to the main.js file, specifically ipcMain with the tag 'saving'
 		}
 	</script>
