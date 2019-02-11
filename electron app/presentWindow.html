@@ -4,12 +4,51 @@
 	<link rel="stylesheet" type="text/css" href="PresentWindow.css" media="screen">
 	<title> Presentation Mode Activated </title>
 </head>
-<body>
-	<ul></ul>
-	<script src="main.js">
+<body onload="sendReady()">
+	<ul>
+		<div>
+			<h1 class="slide-title">This is a slide</h1>
+			<p class="slide-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis orci vel ipsum sagittis, et laoreet dui pretium. Donec eget velit sapien. Aenean condimentum, urna ac mollis elementum, tellus justo ultrices tortor, id placerat urna nunc quis urna. Nulla enim diam, condimentum et sapien quis, blandit ornare erat. Maecenas a tortor auctor lorem ullamcorper facilisis eu eget lorem. Curabitur est sem, varius eu arcu sit amet, viverra mollis turpis. Fusce in purus quam. Ut pulvinar turpis et malesuada condimentum. Nulla nisi libero, lacinia quis dui a, dictum euismod libero. Duis metus neque, posuere non nibh a, facilisis facilisis risus. Nam dui augue, pharetra a dolor placerat, euismod aliquam augue.</p>
+		</div>
+	</ul>
+	<script>
 		const electron = require('electron');
 		const {ipcRenderer} = electron;
 		const ul = document.querySelector('ul');
+
+		document.onkeydown = function(evt){
+			sendReady();
+		}
+
+		function sendReady(){
+			ipcRenderer.send('PresentReady',null);
+		};
+
+		ipcRenderer.on('present',function(e,item){
+			//ul.appendChild(document.createTextNode("initiated the present function"));
+			//make the div and text for the slide
+			const newSlide = document.createElement('div');
+			const itemTitle = document.createElement('h1');
+			const itemText = document.createElement('p');
+
+			//set their classes
+			newSlide.className = "slide";
+			itemTitle.className = "slide-title";
+			itemText.className = "slide-text";
+
+			//populate the text
+			itemTitle.append(item[0]);
+			itemText.append("Click here to edit text");
+
+			//add them to the slide
+			newSlide.appendChild(itemTitle);
+			newSlide.appendChild(itemText);
+
+			//add the new slide to the list
+			ul.innerHTML = "";
+			ul.appendChild(newSlide);
+		});
+
 	</script>
 	<!--
 		The way this should work at the end (theoretically) is
@@ -19,8 +58,4 @@
 		current/planned architecture.
 		https://www.w3schools.com/howto/howto_js_slideshow.asp
 	-->
-	<div>
-		<h1 class="slide-title">This is a slide</h1>
-		<p class="slide-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis orci vel ipsum sagittis, et laoreet dui pretium. Donec eget velit sapien. Aenean condimentum, urna ac mollis elementum, tellus justo ultrices tortor, id placerat urna nunc quis urna. Nulla enim diam, condimentum et sapien quis, blandit ornare erat. Maecenas a tortor auctor lorem ullamcorper facilisis eu eget lorem. Curabitur est sem, varius eu arcu sit amet, viverra mollis turpis. Fusce in purus quam. Ut pulvinar turpis et malesuada condimentum. Nulla nisi libero, lacinia quis dui a, dictum euismod libero. Duis metus neque, posuere non nibh a, facilisis facilisis risus. Nam dui augue, pharetra a dolor placerat, euismod aliquam augue.</p>
-	</div>
 </body>

@@ -4,7 +4,7 @@
 		<title>Name of Product Here</title>
 		<link rel="stylesheet" type="text/css" href="MainWindow.css" media="screen">
 	</head>
-	<body>
+	<body onload="sendReady()">
 		<h1>Current Slide Deck</h1>
 		<ul>
 			<div class="slide" contenteditable="true">
@@ -22,65 +22,96 @@
 		<script>
 			//(1)add deck display
 			const electron = require('electron');
+			const mathJax = require('mathjax-electron');
 			const {ipcRenderer} = electron;
 			const ul = document.querySelector('ul');
 
-			ipcRenderer.on('item:add',function(e,item){
-				//make the div and text for the slide
-				const newSlide = document.createElement('div');
-				const itemTitle = document.createElement('h1');
-				const itemText = document.createElement('p');
+			function sendReady(){
+				ipcRenderer.send('MainReady',null);
+			}
 
-				//set their classes
-				newSlide.className = "slide";
-				itemTitle.className = "slide-title";
-				itemText.className = "slide-text";
-
-				//populate the text
-				itemTitle.append(item);
-				itemText.append("Click here to edit text");
-
-				//make the text editable
-				itemTitle.contentEditable = "true";
-				itemText.contentEditable = "true";
-
-				//add them to the slide
-				newSlide.appendChild(itemTitle);
-				newSlide.appendChild(itemText);
-
-				//add the new slide to the list
-				ul.append(newSlide);		
-				//ul.innerHTML = itemText;
-			});
-
-			ipcRenderer.on('item:remove',function(e,number){
-				const li = document.createElement('li');
-				const itemText = document.createTextNode("remove "+number);
-				li.appendChild(itemText);
-				ul.appendChild(li);
-			});
-
-			ipcRenderer.on('update',function(e,info){
-				const CurrentSlide = document.createElement('div');
-				const slideTitle = document.createElement('h1');
-				const slideText = document.createElement('p');
-
-				CurrentSlide.className = "slide";
-				slideTitle.className = "slide-title";
-				slideText.className = "slide-text";
-
-				slideTitle.append(info[0]);
-				slideText.append(info[2]);
-
-				slideTitle.contentEditable = "true";
-				slideText.contentEditable = "true";
-
-				CurrentSlide.appendChild(slideTitle);
-				CurrentSlide.appendChild(slideText);
-
+			ipcRenderer.on('item:add',function(e,info){
 				ul.innerHTML = "";
-				ul.appendChild(CurrentSlide);
-			})
+				for(var index in info){
+					item = info[index];
+					//make the div and text for the slide
+					const newSlide = document.createElement('div');
+					const itemTitle = document.createElement('h1');
+					const itemText = document.createElement('p');
+
+					//set their classes
+					newSlide.className = "slide";
+					itemTitle.className = "slide-title";
+					itemText.className = "slide-text";
+
+					//populate the text
+					itemTitle.append(item[0]);
+					itemText.append(item[2]);
+
+					//make the text editable
+					itemTitle.contentEditable= "true";
+					itemText.contentEditable = "true";
+
+					//add them to the slide
+					newSlide.appendChild(itemTitle);
+					newSlide.appendChild(itemText);
+
+					//add the new slide to the list
+					ul.append(newSlide);
+				}
+			});
+
+			ipcRenderer.on('load',function(e,info){
+				ul.innerHTML = "";
+				for(var index in info){
+					item = info[index];
+					//make the div and text for the slide
+					const newSlide = document.createElement('div');
+					const itemTitle = document.createElement('h1');
+					const itemText = document.createElement('p');
+
+					//set their classes
+					newSlide.className = "slide";
+					itemTitle.className = "slide-title";
+					itemText.className = "slide-text";
+
+					//populate the text
+					itemTitle.append(item[0]);
+					itemText.append(item[2]);
+
+					//make the text editable
+					itemTitle.contentEditable= "true";
+					itemText.contentEditable = "true";
+
+					//add them to the slide
+					newSlide.appendChild(itemTitle);
+					newSlide.appendChild(itemText);
+
+					//add the new slide to the list
+					ul.append(newSlide);
+				}
+			});
+
+			ipcRenderer.on('pleaseSend',function(e,item){
+				list = ul.children;
+				finalList = [];
+				for(var index = 0; index < list.length; index++){
+					var currentSlide = list[index];
+					listChildren = currentSlide.children;
+					tempList = [];
+					for(var indexI = 0; indexI < listChildren.length; indexI++){
+						var currentNode = listChildren[indexI];
+						tempList.push(currentNode.innerHTML);
+					}
+					tempList.push(index);
+					finalList.push(tempList);
+				}
+				ipcRenderer.send('SlideDeckUpdates',finalList);
+			});
+
+		</script>
+		<script src="./node_modules/mathjax-electron/resources/MathJax/MathJax.js?config=electron">
+			
 		</script>
 	</body>
 </html>

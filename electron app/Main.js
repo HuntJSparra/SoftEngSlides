@@ -29,7 +29,6 @@ function addSlidetoDeck(deck,slide,index){
 	}
 }
 
-/*
 function getLanguageCode(language){
 	if(language == "C"){
 		return 'c';
@@ -59,7 +58,6 @@ function getLanguageCode(language){
 		return 'python';
 	}
 }
-*/
 
 /*
 function getPrismHighlight(slide){
@@ -139,7 +137,7 @@ function slideDisplay(slide){
 		tempList = [];
 		tempList.push(slide.Slidetitle);
 		tempList.push(slide.Slideindex);
-		tempList.push(slide.textboxes.join(""));
+		tempList.push(slide.textboxes);
 		return tempList;
 	}
 }
@@ -173,7 +171,7 @@ function Deck(deckName){
 function Slide(slideName,index,codeOrNot,language){
 	this.Slidetitle = slideName; //the title of this slide, can be just "" (empty title)
 	this.Slideindex = new Number(index); //the index that this slide is, the new Number thing is just to make sure it is a number
-	this.textboxes = []; // the text box in this slide, maybe in the future this will be a list of things inside the slide
+	this.textboxes = ""; // the text box in this slide, maybe in the future this will be a list of things inside the slide
 	this.codeText = codeOrNot //this indicates whether the text in this slide is to be marked as code
 	this.codeLanguage = language //this indicates what language said code would be ins
 }
@@ -202,8 +200,8 @@ app.on('ready',function(){
 	const {ScreenWidth,ScreenHeigh} = electron.screen.getPrimaryDisplay().workAreaSize;
 	console.log("");
 	//create the initial deck
-	//initialization();
-	currentDeck = new Deck("initial_deck");
+	initialization();
+	//currentDeck = new Deck("initial_deck");
 	//create new window
 	mainWindow = new BrowserWindow({
 		width: 1980,
@@ -213,7 +211,6 @@ app.on('ready',function(){
 	mainWindow.maximize();
 	//this causes it not to show until the previous is done, so, once the window is maximized then it will actually show
 	mainWindow.once('ready-to-show',function(){
-		update();
 		mainWindow.show();
 	});
 
@@ -225,16 +222,16 @@ app.on('ready',function(){
 			presentWindow.close();
 		}
 	});
-	const nextSlide = globalShortcut.register('CmdOrCtrl+Right',function(){//this shortcut is to advance the current slide by one
-		if(BrowserWindow.getFocusedWindow() == mainWindow){
-			changeCurrentSlide(currentDeck,currentDeck.currentSlide-1);
-			update();
+	const nextSlide = globalShortcut.register('Right',function(){//this shortcut is to advance the current slide by one
+		if(BrowserWindow.getFocusedWindow() == presentWindow){
+			changeCurrentSlide(currentDeck,currentDeck.currentSlide+1);
+			updatePresenting();
 		}
 	});
-	const previousSlide = globalShortcut.register('CmdOrCtrl+Left',function(){//this shortcut is to bring the current slide back by one
-		if(BrowserWindow.getFocusedWindow() == mainWindow){
+	const previousSlide = globalShortcut.register('Left',function(){//this shortcut is to bring the current slide back by one
+		if(BrowserWindow.getFocusedWindow() == presentWindow){
 			changeCurrentSlide(currentDeck,currentDeck.currentSlide-1);
-			update();
+			updatePresenting();
 		}
 	});
 	const exitApp = globalShortcut.register('CmdOrCtrl+Q',function(){//this shortcut is to simply quit
@@ -305,29 +302,30 @@ function createRemoveWindow(){
 }
 
 //catch item add, this comes from the addWindow.html file, specifically the ipcrenderer.send function
-ipcMain.on('item:add',function(e,item,codeOrNo,language){
+ipcMain.on('item:add',function(e,item,index,codeOrNo,language){
 	if(codeOrNo == "yes"){
 		codeOrNo = true;
 	}
-	else{
+	if(codeOrNo == "not"){
 		codeOrNo = false;
 	}
-	addSlidetoDeck(currentDeck,new Slide(item,currentDeck.currentSlide+1,codeOrNo,getLanguageCode(language)),currentDeck.currentSlide+1); //calls on the deck function for adding a new slide
-	var currentSlideDisplayed = deckDisplay(currentDeck);
-	mainWindow.webContents.send('item:add',currentSlideDisplayed); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
+	addSlidetoDeck(currentDeck,new Slide(item,currentDeck.index,codeOrNo,getLanguageCode(language)),index); //calls on the deck function for adding a new slide
+	currentDeck.slides[index].textboxes = "insert text here";
+	mainWindow.webContents.send('pleaseSend',null);
+	mainWindow.webContents.send('item:add',createListForDisplayingOnMain()); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
 	addWindow.close(); //closes the addWindow
 });
 
 //catch item remove, this comes from the removeWindow.html file, specifically the ipcRenderer.send function
 ipcMain.on('item:remove',function(e,index){
 	removeSlidefromDeck(currentDeck,index); //calls on the deck function for removing a slide
-	mainWindow.webContents.send('item:remove',deckDisplay(currentDeck)); //send information to ipcRenderer with the 'item:remove' tag in mainWindow.html
+	mainWindow.webContents.send('item:add',createListForDisplayingOnMain()); //send information to ipcRenderer with the 'item:remove' tag in mainWindow.html
 	removeWindow.close(); //closes the removeWindow
 });
 
 ipcMain.on('newSlideDeck',function(e,item){
 	currentDeck = getNewDeck(item); //creates a new slide deck and makes it the current one
-	mainWindow.webContents.send('update',deckDisplay(currentDeck)); //sends information to ipcRenderer with the 'update' tag in mainWindow.html
+	mainWindow.webContents.send('load',deckDisplay(currentDeck)); //sends information to ipcRenderer with the 'update' tag in mainWindow.html
 	newSlideDeckWindow.close(); //closes the new slide deck window
 });
 
@@ -342,9 +340,51 @@ ipcMain.on('loading',function(e,item){
 	loadSavedWindow.close();
 });
 
+ipcMain.on('PresentReady',function(e,item){
+	mainWindow.webContents.send('pleaseSend',null);
+	updatePresenting();
+});
+
+ipcMain.on('MainReady',function(e,item){
+	update();
+});
+
+ipcMain.on('SlideDeckUpdates',function(e,item){
+	for(var index = 0; index < item.length; index++){
+		tempList = item[index];
+		slide = new Slide(tempList[0],tempList[2],false,null);
+		slide.textboxes = tempList[1];
+		currentDeck.slides[index] = slide;
+	}
+	if(BrowserWindow.getFocusedWindow() == mainWindow){
+		update();
+	}
+	else{
+		updatePresenting();
+	}
+});
+
 //a catch function for simply updating the mainWindow whenever a change happens and isn't caught by anything else
 function update(){
-	mainWindow.webContents.send('update',deckDisplay(currentDeck)); //send information to ipcRenderer with the 'update' tag in mainWindow.html
+	mainWindow.webContents.send('load',createListForDisplayingOnMain()); //send information to ipcRenderer with the 'update' tag in mainWindow.html
+}
+
+function updatePresenting(){
+	presentWindow.webContents.send('present',deckDisplay(currentDeck));
+}
+
+function createListForDisplayingOnMain(){
+	tempList = currentDeck.slides;
+	finalList = [];
+	for(var index in tempList){
+		tempList1 = [];
+		list = tempList[index];
+		tempList1.push(list.Slidetitle);
+		tempList1.push(list.Slideindex);
+		tempList1.push(list.textboxes);
+		finalList.push(tempList1);
+	}
+	return finalList;
 }
 
 //function to create a save the save file for the user
@@ -383,6 +423,7 @@ function PresentFullScreen(){
 	});
 
 	//sets presentWindow to fullscreen
+	currentDeck.currentSlide = 0;
 	presentWindow.setFullScreen(true);
 
 	//temperarily hides the menu during presenting mode, will be put back once its closed
@@ -394,6 +435,7 @@ function PresentFullScreen(){
 		protocol: 'file:',
 		slashes: true
 	}));
+	presentWindow.focus();
 
 	//garbage collection handle
 	presentWindow.on('close',function(){
@@ -449,6 +491,9 @@ function openSavedFileWindow(){
 //these two functions are very similar windows to the add and remove windows(mostly likely just copy and change some stuff)
 //these two function have not been fulled added yet, but will have their own windows attached
 function Save(){
+	//grab info from main window
+	mainWindow.webContents.send('pleaseSend',null);
+
 	//create new window
 	savingWindow = new BrowserWindow({
 		width: 400,
@@ -584,8 +629,6 @@ if(process.platform == 'darwin'){
 //not currently used
 function initialization(){
 	currentDeck = new Deck("initial_deck");
-	addSlidetoDeck(currentDeck,new Slide("insert Title",0),0);
-	tempTextBox = new TextBox(0,0,0,0);
-	addtoTextBox(tempTextBox,"click to edit text");
-	addTextBox(currentDeck,tempTextBox,currentDeck.currentSlide);
+	addSlidetoDeck(currentDeck,new Slide("insert Title",0,false,null),0);
+	currentDeck.slides[0].textboxes = "insert text here";
 }
