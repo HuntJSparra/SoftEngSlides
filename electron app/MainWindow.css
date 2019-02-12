@@ -21,7 +21,7 @@ body {
 	font-family: sans-serif;
 	text-align: center;
 	max-width: 50vw;
-	max-height: 2.5em;
+	max-height: 10vh;
 }
 
 .slide-text {
@@ -30,7 +30,7 @@ body {
 	font-family: sans-serif;
 	text-align: center;
 	max-width: 50vw;
-	max-height: 32em;
+	max-height: 40vh;
 }
 
 .title-div {
