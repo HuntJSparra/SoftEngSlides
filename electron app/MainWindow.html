@@ -20,7 +20,7 @@
 
 			function sendSlideUpdate(index,theDivs){
 				var titlediv = theDivs[0];
-				var textdiv = theDivs[2];
+				var textdiv = theDivs[1];
 				listTemp = [];
 				listTemp.push(index);
 				listTemp.push(titlediv.childNodes[0].value);
@@ -64,7 +64,7 @@
 
 					//add them to the slide
 					newSlide.appendChild(titlediv);
-					newSlide.appendChild(document.createElement('br'));
+					//newSlide.appendChild(document.createElement('br'));
 					newSlide.appendChild(textdiv);
 
 					//add the new slide to the list
