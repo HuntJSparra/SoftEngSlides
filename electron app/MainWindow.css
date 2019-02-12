@@ -34,17 +34,17 @@ body {
 }
 
 .title-div {
-	position: absolute;
-	top: 15%;
-	width: 50%;
+	position: relative;
+	top: 12.5%;
+	/*width: 30%;*/
 	margin: 0 auto;
-	transform: translateX(25%);
+	/*transform: translateX(-10%);*/
 }
 
 .text-div {
-	position: absolute;
-	top: 30%;
-	width: 50%;
+	position: relative;
+	top: 17.5%;
+	/*width: 30%;*/
 	margin: 0 auto;
-	transform: translateX(25%);
+	/*transform: translateX(-10%);*/
 }
