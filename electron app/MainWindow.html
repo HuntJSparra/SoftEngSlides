@@ -6,19 +6,7 @@
 	</head>
 	<body onload="sendReady()">
 		<h1>Current Slide Deck</h1>
-		<ul>
-			<div class="slide" contenteditable="true">
-				<h1 class="slide-title">This is a slide</h2>
-				<p class="slide-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus iaculis orci vel ipsum sagittis, et laoreet dui pretium. Donec eget velit sapien. Aenean condimentum, urna ac mollis elementum, tellus justo ultrices tortor, id placerat urna nunc quis urna. Nulla enim diam, condimentum et sapien quis, blandit ornare erat. Maecenas a tortor auctor lorem ullamcorper facilisis eu eget lorem. Curabitur est sem, varius eu arcu sit amet, viverra mollis turpis. Fusce in purus quam. Ut pulvinar turpis et malesuada condimentum. Nulla nisi libero, lacinia quis dui a, dictum euismod libero. Duis metus neque, posuere non nibh a, facilisis facilisis risus. Nam dui augue, pharetra a dolor placerat, euismod aliquam augue.</p>
-			</div>
-
-			<div class="slide" contenteditable="true">
-				<h1 class="slide-title">This is another slide</h1>
-				<p class="slide-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce efficitur scelerisque augue, sit amet venenatis massa posuere in. Pellentesque suscipit, turpis sed sollicitudin ullamcorper, nisl lorem consectetur libero, a feugiat neque arcu a nisl. Integer porta lectus non ipsum condimentum, eu feugiat ex rhoncus. Nullam in nisl quis mi scelerisque posuere quis vitae nulla. Nunc tincidunt est bibendum enim pharetra volutpat. Fusce congue eu tortor vitae pretium. Mauris vehicula ipsum sit amet mauris porttitor, sed sodales ipsum semper. Pellentesque finibus elit id nibh dapibus volutpat. Phasellus tincidunt rhoncus tellus nec rutrum. Sed sem urna, laoreet id molestie sit amet, accumsan at urna. Suspendisse potenti. Nullam ut venenatis justo. Mauris interdum tellus id augue congue, vel malesuada felis hendrerit.</p>
-
-				<p class="slide-text">Vivamus non faucibus tortor. Aenean congue accumsan neque, vel varius arcu lobortis sit amet. Donec ullamcorper iaculis sem a efficitur. Phasellus rutrum et justo at sollicitudin. Sed euismod placerat ipsum ac ultrices. Vivamus sagittis fringilla blandit. Curabitur suscipit dolor dolor, ut efficitur velit posuere sit amet. Suspendisse potenti.</p>
-			</div>
-		</ul>
+		<ul></ul>
 		<script>
 			//(1)add deck display
 			const electron = require('electron');
@@ -31,10 +19,12 @@
 			}
 
 			function sendSlideUpdate(index,theChildren){
+				var titlediv = theChildren[0];
+				var textdiv = theChildren[1];
 				listTemp = [];
 				listTemp.push(index);
-				listTemp.push(theChildren[0].value);
-				listTemp.push(theChildren[1].value);
+				listTemp.push(titlediv.childNodes[0].value);
+				listTemp.push(textdiv.childNodes[1].value);
 				ipcRenderer.send('singleSlideUpdate',listTemp);
 			}
 
@@ -44,13 +34,17 @@
 					item = info[index];
 					//make the div and text for the slide
 					const newSlide = document.createElement('div');
+					const titlediv = document.createElement('div');
 					const itemTitle = document.createElement('textarea');
+					const textdiv = document.createElement('div');
 					const itemText = document.createElement('textarea');
 
 					//set their classes
 					newSlide.className = "slide";
 					itemTitle.className = "slide-title";
 					itemText.className = "slide-text";
+					titlediv.className = "title-div";
+					textdiv.className = "text-div";
 
 					//populate the text
 					itemTitle.append(item[0]);
@@ -60,14 +54,18 @@
 					itemTitle.contentEditable= "true";
 					itemText.contentEditable = "true";
 
-					itemTitle.onchange = function(){sendSlideUpdate(index,itemTitle.parentNode.childNodes)}
-					itemText.onchange = function(){sendSlideUpdate(index,itemText.parentNode.childNodes)}
+					itemTitle.onchange = function(){sendSlideUpdate(index,itemTitle.parentNode.parentNode.childNodes)}
+					itemText.onchange = function(){sendSlideUpdate(index,itemText.parentNode.parentNode.childNodes)}
+
+					titlediv.appendChild(itemTitle);
+					const newLine = document.createElement('br');
+					newLine.style.position = "absolute";
+					textdiv.appendChild(itemText);
 
 					//add them to the slide
-					newSlide.appendChild(itemTitle);
-					newSlide.appendChild(itemText);
-
-					//newSlide.onchange = function(){sendSlideUpdate(index,this)};
+					newSlide.appendChild(titlediv);
+					newSlide.appendChild(document.createElement('br'));
+					newSlide.appendChild(textdiv);
 
 					//add the new slide to the list
 					ul.append(newSlide);
