@@ -18,13 +18,13 @@
 				ipcRenderer.send('MainReady',null);
 			}
 
-			function sendSlideUpdate(index,theChildren){
-				var titlediv = theChildren[0];
-				var textdiv = theChildren[1];
+			function sendSlideUpdate(index,theDivs){
+				var titlediv = theDivs[0];
+				var textdiv = theDivs[2];
 				listTemp = [];
 				listTemp.push(index);
 				listTemp.push(titlediv.childNodes[0].value);
-				listTemp.push(textdiv.childNodes[1].value);
+				listTemp.push(textdiv.childNodes[0].value);
 				ipcRenderer.send('singleSlideUpdate',listTemp);
 			}
 
