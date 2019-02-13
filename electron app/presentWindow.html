@@ -8,6 +8,8 @@
 	<ul></ul>
 	<script>
 		const electron = require('electron');
+		const mathJaxElectron = require('mathjax-electron');
+		const mathJax = require('mathjax');
 		const {ipcRenderer} = electron;
 		const ul = document.querySelector('ul');
 
@@ -20,7 +22,6 @@
 		};
 
 		ipcRenderer.on('present',function(e,item){
-			//ul.appendChild(document.createTextNode("initiated the present function"));
 			//make the div and text for the slide
 			const newSlide = document.createElement('div');
 			const itemTitle = document.createElement('h1');

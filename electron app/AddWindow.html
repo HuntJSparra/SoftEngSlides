@@ -3,13 +3,13 @@
 <head>
 	<title>Add Slide</title>
 </head>
-<body>
+<body onload="sendReady()">
 	<form>
 		<div>
 			<label>Enter slide title </label><br>
 			<input type="text" id="item" autofocus><br>
 			<label>Enter slide index </label><br>
-			<input type="number" id="index"><br>
+			<input type="number" id="index" min=0><br>
 			<input type="radio" id="codeOrNo" name="codeOrNo" value="yes">Slide is code based<br>
 			<input type="radio" id="codeOrNo" name="codeOrNo" value="not">Slide is not code based<br>
 			If code based please choose a language<br>
@@ -37,6 +37,14 @@
 		//this stuff grabs the information from the for when the user hits submit
 		const form = document.querySelector('form');
 		form.addEventListener('submit',submitForm);//and this uses that information to call the function below
+
+		function sendReady(){
+			ipcRenderer.send('AddReady',null);
+		}
+
+		ipcRenderer.on('totalSize',function(e,length){
+			document.getElementById("index").max = length;
+		});
 
 		//the function for submiting the information to the main.js file
 		function submitForm(e){

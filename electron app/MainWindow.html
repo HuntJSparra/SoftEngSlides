@@ -8,27 +8,40 @@
 		<h1>Current Slide Deck</h1>
 		<ul></ul>
 		<script>
-			//(1)add deck display
 			const electron = require('electron');
-			const mathJax = require('mathjax-electron');
+			const mathJaxElectron = require('mathjax-electron');
+		//	const = {typesetMath} = require("mathjax-electron")
 			const {ipcRenderer} = electron;
 			const ul = document.querySelector('ul');
+			var recentFocus = ul;
+			var recentFocusIndex = 0;
+			var recentFocusTitleOrText = 0;
 
 			function sendReady(){
 				ipcRenderer.send('MainReady',null);
 			}
 
-			function sendSlideUpdate(index,theDivs){
+			function setRecentFocus(focusedNode,index,titleOrText){
+				recentFocus = focusedNode;
+				recentFocusIndex = index;
+				recentFocusTitleOrText = titleOrText
+			}
+
+			function sendSlideUpdate(index,theParent){
+				var theDivs = theParent.childNodes;
 				var titlediv = theDivs[0];
 				var textdiv = theDivs[1];
 				listTemp = [];
 				listTemp.push(index);
 				listTemp.push(titlediv.childNodes[0].value);
 				listTemp.push(textdiv.childNodes[0].value);
+			//	mathJaxElectron.typesetMath(titlediv.childNodes[0]);
+			//	mathJaxElectron.typesetMath(textdiv.childNodes[0]);
 				ipcRenderer.send('singleSlideUpdate',listTemp);
 			}
 
 			ipcRenderer.on('load',function(e,info){
+				window.alert("blah blah blah");
 				ul.innerHTML = "";
 				for(var index in info){
 					item = info[index];
@@ -54,8 +67,10 @@
 					itemTitle.contentEditable= "true";
 					itemText.contentEditable = "true";
 
-					itemTitle.onchange = function(){sendSlideUpdate(index,itemTitle.parentNode.parentNode.childNodes)}
-					itemText.onchange = function(){sendSlideUpdate(index,itemText.parentNode.parentNode.childNodes)}
+					itemTitle.onchange = function(){sendSlideUpdate(index,itemTitle.parentNode.parentNode)}
+					itemText.onchange = function(){sendSlideUpdate(index,itemText.parentNode.parentNode)}
+					itemTitle.onfocus = function(){setRecentFocus(itemTitle,index,0)}
+					itemText.onfocus = function(){setRecentFocus(itemText,index,1)}
 
 					titlediv.appendChild(itemTitle);
 					const newLine = document.createElement('br');
@@ -64,7 +79,6 @@
 
 					//add them to the slide
 					newSlide.appendChild(titlediv);
-					//newSlide.appendChild(document.createElement('br'));
 					newSlide.appendChild(textdiv);
 
 					//add the new slide to the list
@@ -73,26 +87,85 @@
 				}
 			});
 
-			ipcRenderer.on('pleaseSend',function(e,item){
-				list = ul.children;
-				finalList = [];
-				for(var index = 0; index < list.length; index++){
-					var currentSlide = list[index];
-					listChildren = currentSlide.children;
-					tempList = [];
-					for(var indexI = 0; indexI < listChildren.length; indexI++){
-						var currentNode = listChildren[indexI];
-						tempList.push(currentNode.innerHTML);
-					}
-					tempList.push(index);
-					finalList.push(tempList);
-				}
-				ipcRenderer.send('SlideDeckUpdates',finalList);
+			ipcRenderer.on('createLaTexArea',function(e,item){
+				const LaTexDiv = document.createElement('div');
+				LaTexDiv.className = "right-side-div";
+				const bod = document.querySelector('body');
+				const form = document.createElement('form');
+				LaTexDiv.appendChild(document.createElement('br'));
+				LaTexDiv.appendChild(document.createElement('br'));
+				const titlediv = document.createElement('div');
+				const laTexTitle = document.createTextNode("Insert LaTex");
+				titlediv.appendChild(laTexTitle);
+				titlediv.className = "laTex-Title";
+				LaTexDiv.appendChild(titlediv);
+				LaTexDiv.appendChild(document.createElement('br'));
+				LaTexDiv.appendChild(document.createElement('br'));
+				LaTexDiv.appendChild(document.createElement('br'));
+				LaTexDiv.appendChild(document.createElement('br'));
+				LaTexDiv.appendChild(document.createElement('br'));
+				LaTexDiv.appendChild(document.createElement('br'));
+				const input_1 = document.createElement('input');
+				const input_1_text = document.createTextNode("inLine");
+				const newLine1 = document.createElement('br');
+				input_1.type = 'radio';
+				input_1.name = 'inLineOrNot';
+				input_1.value = 'inLine';
+				const input_2 = document.createElement('input');
+				const input_2_text = document.createTextNode("not inLine");
+				const newLine2 = document.createElement('br');
+				input_2.type = 'radio';
+				input_2.name = 'inLineOrNot';
+				input_2.value = 'outLine';
+				form.appendChild(input_1);
+				form.appendChild(input_1_text);
+				form.appendChild(newLine1);
+				form.appendChild(input_2);
+				form.appendChild(input_2_text);
+				form.appendChild(newLine2);
+				form.appendChild(document.createTextNode("insert LaTex text, whithout delimiters"));
+				const input_text = document.createElement('input');
+				input_text.type = 'text';
+				input_text.id = 'LaTexText';
+				input_text.autofocus = true;
+				form.appendChild(input_text);
+				const latexButton = document.createElement('button');
+				latexButton.innerHTML = "submit";
+				latexButton.type = 'submit';
+				form.appendChild(document.createElement('br'));
+				form.appendChild(latexButton);
+				form.addEventListener('submit',submitForm);
+				LaTexDiv.appendChild(form);
+				bod.appendChild(LaTexDiv);
 			});
 
+			function submitForm(e){
+				e.preventDefault();
+				var stringToSend = "";
+				var stringEnding = "";
+				const inLineOrNot = document.querySelector('input[name = "inLineOrNot"]:checked').value;
+				const LaTexText = document.querySelector('#LaTexText').value;
+				if(inLineOrNot == 'inLine'){
+					stringToSend += "`$";
+					stringEnding = "$`";
+				}
+				else {
+					stringToSend += "`\\[";
+					stringEnding = "\\]`";
+				}
+				stringToSend += LaTexText;
+				stringToSend += stringEnding;
+				recentFocus.value += stringToSend;
+				const bod = document.querySelector('body');
+				bod.removeChild(bod.childNodes[9]);
+				sendSlideUpdate(recentFocusIndex,recentFocus.parentNode.parentNode);
+			}
+
 		</script>
+
 		<script src="./node_modules/mathjax-electron/resources/MathJax/MathJax.js?config=electron">
-			
+			const = {typesetMath} = require("mathjax-electron");
+
 		</script>
 	</body>
 </html>

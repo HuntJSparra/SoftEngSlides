@@ -4,10 +4,12 @@ const electronLocalShortcut = require('electron-localshortcut'); //specifically 
 const url = require('url'); //an imported thing for urls that make things easier
 const path = require('path'); //same as the url import but with system paths
 const fs = require('fs'); // import for writting things to files
+//const mathJax = require('mathjax');
 const Prism = require('prism-electron');
 
 //this creates items from the electron system
 const {app, BrowserWindow, Menu, ipcMain, globalShortcut} = electron;
+
 //objects start ----------------------------------------------
 //this function just creates a new Slide Deck
 function getNewDeck(deckName){
@@ -59,30 +61,11 @@ function getLanguageCode(language){
 	}
 }
 
-/*
-function getPrismHighlight(slide){
-	if(slide.codeLanguage == 'c')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.C);
-	if(slide.codeLanguage == 'csharp')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.C#);
-	if(slide.codeLanguage == 'cpp')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.C++);
-	if(slide.codeLanguage == 'css')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.CSS);
-	if(slide.codeLanguage == 'fortran')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.Fortran);
-	if(slide.codeLanguage == 'html')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.markup);
-	if(slide.codeLanguage == 'java')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.Java);
-	if(slide.codeLanguage == 'js')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.Javascript);
-	if(slide.codeLanguage == 'python')
-	return Prism.highlight(slide.textboxes.join(""),Prism.languages.Python);
-}
-*/
-
 function removeSlidefromDeck(deck,index){
+	if(deck.slides.length == 1){
+		return;
+		//maybe alert the user of the fact that there is only one slide left
+	}
 	tempone = deck.slides.slice(0,index); //this breaks off the front end of the list before the to be removed slide
 	temptwo = deck.slides.slice(index);	  //this breaks off the list starting at the to be removed slide and everything after
 	temptwo.shift();					  //this removed the slide no longer wanted and makes the second list smaller by one
@@ -151,15 +134,6 @@ function codeSlideDisplay(slide){
 	return tempList;
 }
 
-//textbox methods
-function addtoTextBox(textbox,index){
-	//stuff and things
-}
-
-function removefromTextBox(textbox,index){
-	//stuff and things
-}
-
 //the Deck object
 function Deck(deckName){
 	this.deckName = deckName; //the deckName
@@ -174,16 +148,6 @@ function Slide(slideName,index,codeOrNot,language){
 	this.textboxes = ""; // the text box in this slide, maybe in the future this will be a list of things inside the slide
 	this.codeText = codeOrNot //this indicates whether the text in this slide is to be marked as code
 	this.codeLanguage = language //this indicates what language said code would be ins
-}
-
-//the Text Box object (this is not entirly done yet, some for functionally has to be added)
-function TextBox(initalX,initalY,initialWidth,initialHeight){
-	this.Text = []; //this list will contain all the text in the textbox, character by character
-	this.CursorIndex = -1; //where the cursor is on the textbox if it is on the textbox, otherwise it is -1
-	this.centerX = initalX; //the x value of where the textbox is when it is initially added
-	this.centerY = initalY; //the y value of where the textbox is when it is initially added
-	this.boxWidth = initialWidth; //the width value of the textbox when it is initially added
-	this.boxHeight = initialHeight; //the height value of the textbox when it is initally added
 }
 //objects stop -----------------------------------------------
 
@@ -201,7 +165,7 @@ app.on('ready',function(){
 	console.log("");
 	//create the initial deck
 	initialization();
-	//currentDeck = new Deck("initial_deck");
+
 	//create new window
 	mainWindow = new BrowserWindow({
 		width: 1980,
@@ -309,11 +273,8 @@ ipcMain.on('item:add',function(e,item,index,codeOrNo,language){
 	if(codeOrNo == "not"){
 		codeOrNo = false;
 	}
-	//console.log(currentDeck.slides);
 	addSlidetoDeck(currentDeck,new Slide(item,currentDeck.index,codeOrNo,getLanguageCode(language)),index); //calls on the deck function for adding a new slide
 	currentDeck.slides[index].textboxes = "insert text here";
-	//mainWindow.webContents.send('pleaseSend',null);
-	//console.log(currentDeck.slides);
 	mainWindow.webContents.send('load',createListForDisplayingOnMain()); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
 	addWindow.close(); //closes the addWindow
 });
@@ -351,25 +312,9 @@ ipcMain.on('MainReady',function(e,item){
 	update();
 });
 
-/*
-ipcMain.on('SlideDeckUpdates',function(e,item){
-	for(var index = 0; index < item.length; index++){
-		tempList = item[index];
-		slide = new Slide(tempList[0],tempList[2],false,null);
-		slide.textboxes = tempList[1];
-		currentDeck.slides[index] = slide;
-	}
-	if(BrowserWindow.getFocusedWindow() == mainWindow){
-		update();
-	}
-	if(BrowserWindow.getFocusedWindow() == presentWindow){
-		updatePresenting();
-	}
-	else{
-		//nothing
-	}
+ipcMain.on('AddReady',function(e,item){
+	addWindow.webContents.send('totalSize',currentDeck.slides.length);
 });
-*/
 
 ipcMain.on('singleSlideUpdate',function(e,item){
 	currentDeck.slides[item[0]] = new Slide(item[1],item[0],false,null);
@@ -404,6 +349,7 @@ function createListForDisplayingOnMain(){
 function createAndSaveFile(SlideDeck,name){
 	const JSONfile = jsonifytheDeck(SlideDeck); 
 	fs.writeFile(name+".json",JSONfile,function(err){
+		currentDeck.deckName = name;
 		if(err){
 			//break
 		}
@@ -419,12 +365,18 @@ function openSavedFile(input){
 			return console.log(err);
 		}
 		var jsonData = JSON.parse(data);
-		//recreate(jsonData);
 		currentDeck = jsonData;
 		update();
 	});
 }
 
+function insertLaTexInitial(){
+	mainWindow.webContents.send('createLaTexArea',null);
+}
+
+function insertLaTexFinal(inLineOrNot){
+	//add stuff here
+}
 
 //this function start presentaion mode
 function PresentFullScreen(){
@@ -603,22 +555,12 @@ const mainMenuTemplate = [
 				}
 			},
 			{
-				label:'Go to next Slide',
-				accelerator: 'CmdOrCtrl+Right',
+				label:'Add laTex',
+				accelerator: 'CmdOrCtrl+Shift+L',
 				click(){
-					changeCurrentSlide(currentDeck.currentSlide+1);
+					insertLaTexInitial();
 				}
-			},
-			{
-				label:'Go to previous Slide',
-				accelerator: 'CmdOrCtrl+Left',
-				click(){
-					changeCurrentSlide(currentDeck.currentSlide-1);
-				}
-			},
-			{
-				label:'Clear Slides'
-			},
+			}
 		]
 	},
 	{
