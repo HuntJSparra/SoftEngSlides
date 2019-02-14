@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Name of Product Here</title>
+		<title>SlideSnek</title>
 		<link rel="stylesheet" type="text/css" href="MainWindow.css" media="screen">
+		<link rel="stylesheet" type="text/css" href="prism.css">
 	</head>
 	<body onload="sendReady()">
-		<h1>Current Slide Deck</h1>
+		<h1 class="deck-title">Current Slide Deck</h1>
 		<ul></ul>
 		<script>
 			const electron = require('electron');
@@ -35,22 +36,23 @@
 				listTemp.push(index);
 				listTemp.push(titlediv.childNodes[0].value);
 				listTemp.push(textdiv.childNodes[0].value);
-			//	mathJaxElectron.typesetMath(titlediv.childNodes[0]);
-			//	mathJaxElectron.typesetMath(textdiv.childNodes[0]);
 				ipcRenderer.send('singleSlideUpdate',listTemp);
 			}
 
 			ipcRenderer.on('load',function(e,info){
-				window.alert("blah blah blah");
 				ul.innerHTML = "";
 				for(var index in info){
 					item = info[index];
 					//make the div and text for the slide
+					const preElement = document.createElement('pre');
 					const newSlide = document.createElement('div');
 					const titlediv = document.createElement('div');
 					const itemTitle = document.createElement('textarea');
 					const textdiv = document.createElement('div');
+					const codeContainer = document.createElement('code');
 					const itemText = document.createElement('textarea');
+					const innerPre = document.createElement('pre');
+
 
 					//set their classes
 					newSlide.className = "slide";
@@ -58,6 +60,9 @@
 					itemText.className = "slide-text";
 					titlediv.className = "title-div";
 					textdiv.className = "text-div";
+					codeContainer.className = item[4];
+				//	window.alert("item" + info[index] + item[4]);
+				//	window.alert("classname" + info[index] + codeContainer.className);
 
 					//populate the text
 					itemTitle.append(item[0]);
@@ -74,15 +79,35 @@
 
 					titlediv.appendChild(itemTitle);
 					const newLine = document.createElement('br');
-					newLine.style.position = "absolute";
+				//	newLine.style.position = "absolute";
+				//	titlediv.appendChild(newLine);
 					textdiv.appendChild(itemText);
+
+					if(item.length == 6) {
+						itemText.onchange = function(){sendSlideUpdate(index,itemText.parentNode.parentNode.parentNode.parentNode)};
+						innerPre.appendChild(textdiv);
+						codeContainer.appendChild(innerPre);
+						//codeContainer.appendChild(textdiv);
+					}
 
 					//add them to the slide
 					newSlide.appendChild(titlediv);
-					newSlide.appendChild(textdiv);
+					//newSlide.appendChild(textdiv);
+
+					if(item.length == 6) {
+						codeContainer.name = "code";
+						newSlide.appendChild(codeContainer);
+					}
+					else {
+						textdiv.name = "no-code";
+						newSlide.appendChild(textdiv);
+					}
+
+					preElement.appendChild(newSlide);
+
 
 					//add the new slide to the list
-					ul.append(newSlide);
+					ul.append(preElement);
 					ul.appendChild(document.createElement('br'));
 				}
 			});
@@ -92,27 +117,27 @@
 				LaTexDiv.className = "right-side-div";
 				const bod = document.querySelector('body');
 				const form = document.createElement('form');
-				LaTexDiv.appendChild(document.createElement('br'));
-				LaTexDiv.appendChild(document.createElement('br'));
+			//	LaTexDiv.appendChild(document.createElement('br'));
+			//	LaTexDiv.appendChild(document.createElement('br'));
 				const titlediv = document.createElement('div');
 				const laTexTitle = document.createTextNode("Insert LaTex");
 				titlediv.appendChild(laTexTitle);
 				titlediv.className = "laTex-Title";
 				LaTexDiv.appendChild(titlediv);
-				LaTexDiv.appendChild(document.createElement('br'));
-				LaTexDiv.appendChild(document.createElement('br'));
-				LaTexDiv.appendChild(document.createElement('br'));
-				LaTexDiv.appendChild(document.createElement('br'));
+			//	LaTexDiv.appendChild(document.createElement('br'));
+			//	LaTexDiv.appendChild(document.createElement('br'));
+			//	LaTexDiv.appendChild(document.createElement('br'));
+			//	LaTexDiv.appendChild(document.createElement('br'));
 				LaTexDiv.appendChild(document.createElement('br'));
 				LaTexDiv.appendChild(document.createElement('br'));
 				const input_1 = document.createElement('input');
-				const input_1_text = document.createTextNode("inLine");
+				const input_1_text = document.createTextNode("Inline");
 				const newLine1 = document.createElement('br');
 				input_1.type = 'radio';
 				input_1.name = 'inLineOrNot';
 				input_1.value = 'inLine';
 				const input_2 = document.createElement('input');
-				const input_2_text = document.createTextNode("not inLine");
+				const input_2_text = document.createTextNode("Not inline");
 				const newLine2 = document.createElement('br');
 				input_2.type = 'radio';
 				input_2.name = 'inLineOrNot';
@@ -123,15 +148,18 @@
 				form.appendChild(input_2);
 				form.appendChild(input_2_text);
 				form.appendChild(newLine2);
-				form.appendChild(document.createTextNode("insert LaTex text, whithout delimiters"));
+				form.appendChild(document.createTextNode("Insert LaTex text without delimiters:"));
+				const newLine3 = document.createElement('br');
 				const input_text = document.createElement('input');
 				input_text.type = 'text';
 				input_text.id = 'LaTexText';
 				input_text.autofocus = true;
+				form.appendChild(newLine3);
 				form.appendChild(input_text);
 				const latexButton = document.createElement('button');
 				latexButton.innerHTML = "submit";
 				latexButton.type = 'submit';
+				latexButton.className = "latex-btn"
 				form.appendChild(document.createElement('br'));
 				form.appendChild(latexButton);
 				form.addEventListener('submit',submitForm);
@@ -166,6 +194,10 @@
 		<script src="./node_modules/mathjax-electron/resources/MathJax/MathJax.js?config=electron">
 			const = {typesetMath} = require("mathjax-electron");
 
+		</script>
+
+		<script>
+			const jsprism = require('jsprism');
 		</script>
 	</body>
 </html>

@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
 	<link rel="stylesheet" type="text/css" href="PresentWindow.css" media="screen">
+	<link rel="stylesheet" type="text/css" href="prism.css">
 	<title> Presentation Mode Activated </title>
 </head>
 <body onload="sendReady()">
 	<ul></ul>
+	<script type="text/javascript" src="prism.js"></script>
 	<script>
 		const electron = require('electron');
 		const mathJaxElectron = require('mathjax-electron');
@@ -23,35 +25,44 @@
 
 		ipcRenderer.on('present',function(e,item){
 			//make the div and text for the slide
+			const preElement = document.createElement('pre');
 			const newSlide = document.createElement('div');
 			const itemTitle = document.createElement('h1');
+			const codeContainer = document.createElement('code');
 			const itemText = document.createElement('p');
 
 			//set their classes
 			newSlide.className = "slide";
 			itemTitle.className = "slide-title";
 			itemText.className = "slide-text";
+			codeContainer.className = item[4];
 
 			//populate the text
 			itemTitle.append(item[0]);
 			itemText.append(item[2]);
 
+			if(item.length == 6) {
+				codeContainer.appendChild(itemText);
+			}
+
 			//add them to the slide
 			newSlide.appendChild(itemTitle);
-			newSlide.appendChild(itemText);
+			//newSlide.appendChild(itemText);
+
+			if(item.length == 6) {
+				newSlide.appendChild(codeContainer);
+			}
+			else {
+				newSlide.appendChild(itemText);
+			}
+
+			preElement.appendChild(newSlide);
 
 			//add the new slide to the list
 			ul.innerHTML = "";
-			ul.appendChild(newSlide);
+			ul.appendChild(preElement);
+
 		});
 
 	</script>
-	<!--
-		The way this should work at the end (theoretically) is
-		that every time the user adds a slide, it makes a new
-		div. There is a tutorial online for making slideshows
-		that could have some useful information about navigation, but I don't know how it applies to our
-		current/planned architecture.
-		https://www.w3schools.com/howto/howto_js_slideshow.asp
-	-->
 </body>

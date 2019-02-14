@@ -5,7 +5,7 @@ const url = require('url'); //an imported thing for urls that make things easier
 const path = require('path'); //same as the url import but with system paths
 const fs = require('fs'); // import for writting things to files
 //const mathJax = require('mathjax');
-const Prism = require('prism-electron');
+//const Prism = require('prism-electron');
 
 //this creates items from the electron system
 const {app, BrowserWindow, Menu, ipcMain, globalShortcut} = electron;
@@ -13,6 +13,7 @@ const {app, BrowserWindow, Menu, ipcMain, globalShortcut} = electron;
 //objects start ----------------------------------------------
 //this function just creates a new Slide Deck
 function getNewDeck(deckName){
+	//currentDeck = initialization();
 	return new Deck(deckName);
 }
 
@@ -30,37 +31,40 @@ function addSlidetoDeck(deck,slide,index){
 		deck.slides[currentIndex].Slideindex = currentIndex;				  //all the slides have their correct index
 	}
 }
-
+/*
 function getLanguageCode(language){
 	if(language == "C"){
-		return 'c';
+		return "language-c";
 	}
-	if(language == "C#"){
-		return 'csharp';
+	else if(language == "C#"){
+		return "language-csharp";
 	}
-	if(language == "C++"){
-		return 'cpp';
+	else if(language == "C++"){
+		return "language-cpp";
 	}
-	if(language == "CSS"){
-		return 'css';
+	else if(language == "CSS"){
+		return "language-css";
 	}
-	if(language == "Fortran"){
-		return 'fortran';
+	else if(language == "Fortran"){
+		return "language-fortran";
 	}
-	if(language == "HTML"){
-		return 'html';
+	else if(language == "HTML"){
+		return "language-html";
 	}
-	if(language == "Java"){
-		return 'java';
+	else if(language == "Java"){
+		return "language-java";
 	}
-	if(language == "Javascript"){
-		return 'js';
+	else if(language == "Javascript"){
+		return "language-js";
 	}
-	if(language == "Python"){
-		return 'python';
+	else if(language == "Python"){
+		return "language-python";
+	}
+	else {
+		return "no language";
 	}
 }
-
+*/
 function removeSlidefromDeck(deck,index){
 	if(deck.slides.length == 1){
 		return;
@@ -96,6 +100,14 @@ function deckDisplay(deck){
 	return slideDisplay(deck.slides[deck.currentSlide]);
 }
 
+function deckDisplayMain(deck){
+	var tempList = [];
+	for(var index = 0; index < deck.slides.length; index++){
+		tempList.push(slideDisplay(deck.slides[index]));
+	}
+	return tempList;
+}
+
 function jsonifytheDeck(deck){
 	return JSON.stringify(deck);
 }
@@ -113,27 +125,21 @@ function removeTextBox(slide,index){
 }
 
 function slideDisplay(slide){
-	if(slide.codeText){
-		return codeSlideDisplay(slide);
-	}
-	else{
-		tempList = [];
-		tempList.push(slide.Slidetitle);
-		tempList.push(slide.Slideindex);
-		tempList.push(slide.textboxes);
-		return tempList;
-	}
+	tempList = [];
+	tempList.push(slide.Slidetitle);
+	tempList.push(slide.Slideindex);
+	tempList.push(slide.textboxes);
+	return tempList;
 }
-
+/*
 function codeSlideDisplay(slide){
 	tempList = [];
 	tempList.push(slide.Slidetitle);
 	tempList.push(slide.Slideindex);
-	tempList.push(slide.codeText);
-	tempList.push(slide.codeLanguage);
+	tempList.push(slide.textboxes);
 	return tempList;
 }
-
+*/
 //the Deck object
 function Deck(deckName){
 	this.deckName = deckName; //the deckName
@@ -142,12 +148,10 @@ function Deck(deckName){
 }
 
 //the Slide object
-function Slide(slideName,index,codeOrNot,language){
+function Slide(slideName,index){
 	this.Slidetitle = slideName; //the title of this slide, can be just "" (empty title)
 	this.Slideindex = new Number(index); //the index that this slide is, the new Number thing is just to make sure it is a number
 	this.textboxes = ""; // the text box in this slide, maybe in the future this will be a list of things inside the slide
-	this.codeText = codeOrNot //this indicates whether the text in this slide is to be marked as code
-	this.codeLanguage = language //this indicates what language said code would be ins
 }
 //objects stop -----------------------------------------------
 
@@ -169,7 +173,8 @@ app.on('ready',function(){
 	//create new window
 	mainWindow = new BrowserWindow({
 		width: 1980,
-		height:1120
+		height:1120,
+		icon: path.join(__dirname, 'assets/icons/png/slideSnekPNG.png')
 	});
 	//maximize the main window
 	mainWindow.maximize();
@@ -199,6 +204,7 @@ app.on('ready',function(){
 		}
 	});
 	const exitApp = globalShortcut.register('CmdOrCtrl+Q',function(){//this shortcut is to simply quit
+		createAndSaveFile(currentDeck, "autosave");
 		mainWindow.close();
 	});
 
@@ -212,6 +218,7 @@ app.on('ready',function(){
 
 	//quit app when closed
 	mainWindow.on('closed',function(){
+		createAndSaveFile(currentDeck, "autosave");
 		app.quit();
 	});
 
@@ -227,9 +234,13 @@ function createAddWindow(){
 	//create new window
 	addWindow = new BrowserWindow({
 		width: 400,
-		height:500,
-		title:'Add Slide'
+		height:300,
+		title:'Add Slide',
+		icon: path.join(__dirname, 'assets/icons/png/slideSnekPNG.png')
 	});
+
+	//hide the menu bar
+	addWindow.setMenuBarVisibility(false);
 
 	//load html file into window
 	addWindow.loadURL(url.format({
@@ -248,9 +259,13 @@ function createRemoveWindow(){
 	//create new window
 	removeWindow = new BrowserWindow({
 		width: 400,
-		height:500,
-		title:'Remove Slide'
+		height:275,
+		title:'Remove Slide',
+		icon: path.join(__dirname, 'assets/icons/png/slideSnekPNG.png')
 	});
+
+	//hide the menu bar
+	removeWindow.setMenuBarVisibility(false);
 
 	//load html file into window
 	removeWindow.loadURL(url.format({
@@ -266,14 +281,8 @@ function createRemoveWindow(){
 }
 
 //catch item add, this comes from the addWindow.html file, specifically the ipcrenderer.send function
-ipcMain.on('item:add',function(e,item,index,codeOrNo,language){
-	if(codeOrNo == "yes"){
-		codeOrNo = true;
-	}
-	if(codeOrNo == "not"){
-		codeOrNo = false;
-	}
-	addSlidetoDeck(currentDeck,new Slide(item,currentDeck.index,codeOrNo,getLanguageCode(language)),index); //calls on the deck function for adding a new slide
+ipcMain.on('item:add',function(e,item,index){
+	addSlidetoDeck(currentDeck,new Slide(item,currentDeck.index),index); //calls on the deck function for adding a new slide
 	currentDeck.slides[index].textboxes = "insert text here";
 	mainWindow.webContents.send('load',createListForDisplayingOnMain()); //sends information to ipcRenderer with the 'item:add' tag in mainWindow.html
 	addWindow.close(); //closes the addWindow
@@ -287,8 +296,10 @@ ipcMain.on('item:remove',function(e,index){
 });
 
 ipcMain.on('newSlideDeck',function(e,item){
-	currentDeck = getNewDeck(item); //creates a new slide deck and makes it the current one
-	mainWindow.webContents.send('load',deckDisplay(currentDeck)); //sends information to ipcRenderer with the 'update' tag in mainWindow.html
+	createAndSaveFile(currentDeck, "autosave");
+	initialization(); //creates a new slide deck and makes it the current one
+	currentDeck.deckName = item;
+	mainWindow.webContents.send('load',deckDisplayMain(currentDeck)); //sends information to ipcRenderer with the 'update' tag in mainWindow.html
 	newSlideDeckWindow.close(); //closes the new slide deck window
 });
 
@@ -320,7 +331,7 @@ ipcMain.on('singleSlideUpdate',function(e,item){
 	currentDeck.slides[item[0]] = new Slide(item[1],item[0],false,null);
 	currentDeck.slides[item[0]].textboxes = item[2];
 	console.log(currentDeck.slides);
-})
+});
 
 //a catch function for simply updating the mainWindow whenever a change happens and isn't caught by anything else
 function update(){
@@ -347,9 +358,9 @@ function createListForDisplayingOnMain(){
 
 //function to create a save the save file for the user
 function createAndSaveFile(SlideDeck,name){
+	currentDeck.deckName = name;
 	const JSONfile = jsonifytheDeck(SlideDeck); 
 	fs.writeFile(name+".json",JSONfile,function(err){
-		currentDeck.deckName = name;
 		if(err){
 			//break
 		}
@@ -383,8 +394,9 @@ function PresentFullScreen(){
 	//create new window
 	presentWindow = new BrowserWindow({
 		width: 400,
-		height:500,
-		title:'Presenting'
+		height:400,
+		title:'Presenting',
+		icon: path.join(__dirname, 'assets/icons/png/slideSnekPNG.png')
 	});
 
 	//sets presentWindow to fullscreen
@@ -415,8 +427,9 @@ function createWebsiteWindow(){
 	//create new window
 	websiteWindow = new BrowserWindow({
 		width: 400,
-		height:500,
-		title:'You clicked a Link!'
+		height:400,
+		title:'You clicked a Link!',
+		icon: path.join(__dirname, 'assets/icons/png/slideSnekPNG.png')
 	});
 
 	//makes the website window maximized
@@ -437,9 +450,13 @@ function openSavedFileWindow(){
 	//create new window
 	loadSavedWindow = new BrowserWindow({
 		width: 400,
-		height:500,
-		title:'open saved File'
+		height:250,
+		title:'open saved File',
+		icon: path.join(__dirname, 'assets/icons/png/slideSnekPNG.png')
 	});
+
+	//hide the menu
+	loadSavedWindow.setMenuBarVisibility(false);
 
 	loadSavedWindow.loadURL(url.format({
 		pathname: path.join(__dirname,'loadSavedWindow.html'),
@@ -462,9 +479,13 @@ function Save(){
 	//create new window
 	savingWindow = new BrowserWindow({
 		width: 400,
-		height:500,
-		title:'Saving'
+		height:250,
+		title:'Saving',
+		icon: path.join(__dirname, 'assets/icons/png/slideSnekPNG.png')
 	});
+
+	//hide the menu
+	savingWindow.setMenuBarVisibility(false);
 
 	//load html file into window
 	savingWindow.loadURL(url.format({
@@ -483,9 +504,13 @@ function newSlideDeck(){
 	//create new window
 	newSlideDeckWindow = new BrowserWindow({
 		width: 400,
-		height:500,
-		title:'Create a new slide deck'
+		height:300,
+		title:'Create a new slide deck',
+		icon: path.join(__dirname, 'assets/icons/png/slideSnekPNG.png')
 	});
+
+	//hide the menu
+	newSlideDeckWindow.setMenuBarVisibility(false);
 
 	//load html file into window
 	newSlideDeckWindow.loadURL(url.format({
@@ -507,6 +532,7 @@ const mainMenuTemplate = [
 	{
 		label:'File',
 		submenu:[
+		
 			{
 				label: 'New Slide Deck',
 				accelerator: 'CmdOrCtrl+N',
@@ -514,6 +540,7 @@ const mainMenuTemplate = [
 					newSlideDeck();
 				}
 			},
+		
 			{
 				label:'Save',
 				accelerator: 'CmdOrCtrl+S',
@@ -532,6 +559,7 @@ const mainMenuTemplate = [
 				label:'Quit',
 				accelerator: 'CmdOrCtrl+Q',
 				click(){
+					createAndSaveFile(currentDeck, "autosave");
 					app.quit();
 				}
 			}
@@ -553,7 +581,8 @@ const mainMenuTemplate = [
 				click(){
 					createRemoveWindow();
 				}
-			},
+			}
+			/*
 			{
 				label:'Add laTex',
 				accelerator: 'CmdOrCtrl+Shift+L',
@@ -561,6 +590,7 @@ const mainMenuTemplate = [
 					insertLaTexInitial();
 				}
 			}
+			*/
 		]
 	},
 	{
@@ -584,6 +614,7 @@ if(process.platform == 'darwin'){
 //not currently used
 function initialization(){
 	currentDeck = new Deck("initial_deck");
-	addSlidetoDeck(currentDeck,new Slide("insert Title",0,false,null),0);
+	addSlidetoDeck(currentDeck,new Slide("insert Title",0),0);
 	currentDeck.slides[0].textboxes = "insert text here";
+	return currentDeck;
 }

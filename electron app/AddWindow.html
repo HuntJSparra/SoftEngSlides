@@ -2,29 +2,17 @@
 <html lang="en">
 <head>
 	<title>Add Slide</title>
+	<link rel="stylesheet" type="text/css" href="popup.css">
 </head>
 <body onload="sendReady()">
+	<h1>Add a New Slide</h1>
 	<form>
 		<div>
-			<label>Enter slide title </label><br>
+			<label>Enter slide title: </label><br>
 			<input type="text" id="item" autofocus><br>
-			<label>Enter slide index </label><br>
+			<label>Enter slide index: </label><br>
 			<input type="number" id="index" min=0><br>
-			<input type="radio" id="codeOrNo" name="codeOrNo" value="yes">Slide is code based<br>
-			<input type="radio" id="codeOrNo" name="codeOrNo" value="not">Slide is not code based<br>
-			If code based please choose a language<br>
-			<input type="text" list="languages"/>
-			<datalist id="languages">
-				<option>C</option>
-				<option>C#</option>
-				<option>C++</option>
-				<option>CSS</option>
-				<option>Fortran</option>
-				<option>HTML</option>
-				<option>Java</option>
-				<option>Javascript</option>
-				<option>Python</option>
-			</datalist>
+			
 		</div>
 		<button type="submit">Add Slide</button>
 	</form>
@@ -51,9 +39,7 @@
 			e.preventDefault(); //forms by default want to save to a file, this prevents that
 			const item = document.querySelector('#item').value; //grabs the the slide title and saves it into constant item
 			const index = document.querySelector('#index').value;
-			const codeOrNo = document.querySelector('input[name = "codeOrNo"]:checked').value;
-			const language = document.querySelector('#languages').value;
-			ipcRenderer.send('item:add',item,index,codeOrNo,language); //sends the item and index to the main.js file, specifically ipcMain with the tag 'item:add'
+			ipcRenderer.send('item:add',item,index); //sends the item and index to the main.js file, specifically ipcMain with the tag 'item:add'
 		}
 	</script>
 </body>
