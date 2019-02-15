@@ -192,15 +192,19 @@ app.on('ready',function(){
 		}
 	});
 	const nextSlide = globalShortcut.register('Right',function(){//this shortcut is to advance the current slide by one
-		if(BrowserWindow.getFocusedWindow() == presentWindow){
-			changeCurrentSlide(currentDeck,currentDeck.currentSlide+1);
-			updatePresenting();
+		if(presentWindow!= null){
+			if(BrowserWindow.getFocusedWindow() == presentWindow){
+				changeCurrentSlide(currentDeck,currentDeck.currentSlide+1);
+				updatePresenting();
+			}
 		}
 	});
 	const previousSlide = globalShortcut.register('Left',function(){//this shortcut is to bring the current slide back by one
-		if(BrowserWindow.getFocusedWindow() == presentWindow){
-			changeCurrentSlide(currentDeck,currentDeck.currentSlide-1);
-			updatePresenting();
+		if(presentWindow!= null){
+			if(BrowserWindow.getFocusedWindow() == presentWindow){
+				changeCurrentSlide(currentDeck,currentDeck.currentSlide-1);
+				updatePresenting();
+			}
 		}
 	});
 	const exitApp = globalShortcut.register('CmdOrCtrl+Q',function(){//this shortcut is to simply quit
@@ -359,13 +363,14 @@ function createListForDisplayingOnMain(){
 //function to create a save the save file for the user
 function createAndSaveFile(SlideDeck,name){
 	currentDeck.deckName = name;
-	const JSONfile = jsonifytheDeck(SlideDeck); 
+	const JSONfile = jsonifytheDeck(SlideDeck);
 	fs.writeFile(name+".json",JSONfile,function(err){
 		if(err){
-			//break
+			console.log("Saving error:");
+			return console.log(err);
 		}
 		else{
-			//console.log("hooray you did it");
+			console.log("Saved @ "+name+".json");
 		}
 	});
 }
